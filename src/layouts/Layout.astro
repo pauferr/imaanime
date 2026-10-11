@@ -32,20 +32,22 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         <a href={home} aria-current={current(home)}>{t.nav.season}</a>
         <a href={today} aria-current={current(today)}>{t.nav.today}</a>
       </nav>
-      <label class="switch">
-        <span>JP</span>
-        <input type="checkbox" id="titles-en" />
-        <span>EN</span>
-      </label>
+      <fieldset class="segmented small">
+        <legend class="sr-only">{t.titles.label}</legend>
+        <label><input type="radio" name="titles" id="titles-jp" checked /><span>{t.titles.romaji}</span></label>
+        <label><input type="radio" name="titles" id="titles-en" /><span>{t.titles.english}</span></label>
+      </fieldset>
     </header>
 
     <!-- placed before the content: page scripts read #titles-en already initialized -->
     <script>
       // title language (JP/EN) is a separate preference from the UI locale
-      const titles = document.getElementById('titles-en') as HTMLInputElement;
-      try { titles.checked = localStorage.getItem('titles') === 'en'; } catch {}
-      titles.addEventListener('change', () => {
-        try { localStorage.setItem('titles', titles.checked ? 'en' : 'jp'); } catch {}
+      // pages read #titles-en.checked and listen for "titles-change" on document
+      const en = document.getElementById('titles-en') as HTMLInputElement;
+      try { if (localStorage.getItem('titles') === 'en') en.checked = true; } catch {}
+      document.querySelector('.segmented.small')!.addEventListener('change', () => {
+        try { localStorage.setItem('titles', en.checked ? 'en' : 'jp'); } catch {}
+        document.dispatchEvent(new Event('titles-change'));
       });
     </script>
 
@@ -105,29 +107,30 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       nav a[aria-current='page'] { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
 
       nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-      .switch { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
-      .switch input {
-        appearance: none;
-        width: 44px; height: 24px;
-        border-radius: 12px;
-        background: var(--muted);
-        position: relative;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .switch input::after {
-        content: '';
-        position: absolute; top: 3px; left: 3px;
-        width: 18px; height: 18px;
-        border-radius: 50%;
-        background: #fff;
-        transition: transform 0.2s;
-      }
-      .switch input:checked { background: var(--accent); }
-      .switch input:checked::after { transform: translateX(20px); }
-      .switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
-      /* ponytail: the switch only toggles CSS via :has(), zero JS to show/hide */
+      /* segmented control: radios styled as buttons (title language here, New/Continuing tabs on /) */
+      .segmented {
+        display: flex; gap: 0.25rem; width: fit-content;
+        margin: 0; padding: 0.25rem; border: 0; min-width: 0;
+        border-radius: 10px; background: var(--surface); box-shadow: var(--shadow);
+      }
+      .segmented input { position: absolute; opacity: 0; }
+      .segmented span {
+        display: block;
+        padding: 0.4rem 0.9rem;
+        border-radius: 8px;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .segmented small { font-weight: 500; opacity: 0.7; }
+      .segmented input:checked + span { background: var(--accent); color: #fff; }
+      .segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .segmented.small span { padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+
+      /* ponytail: title language only toggles CSS via :has(), zero JS to show/hide */
       .en { display: none; }
       body:has(#titles-en:checked) .en { display: inline; }
       body:has(#titles-en:checked) .jp { display: none; }

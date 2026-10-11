@@ -6,6 +6,7 @@ const en = {
   seasons: { winter: 'Winter', spring: 'Spring', summer: 'Summer', fall: 'Fall' } as Record<string, string>,
   currentSeason: 'Current season',
   nav: { season: 'Season', today: 'Today' },
+  titles: { label: 'Title language', romaji: 'Romaji', english: 'English' },
   index: {
     description: (season: string) => `Anime airing now: ${season}`,
     subtitle: (season: string) => `Airing now · ${season}`,

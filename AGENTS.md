@@ -53,7 +53,7 @@ src/
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
 - **Time zone**: always the browser's (`localTz()`), no picker. **Title language** (`titles`) is stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted).
 - **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Genres are listed by frequency.
-- **JP/EN title switch**: pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
+- **Title language (Romaji / English)**: a segmented control in the header; pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
 
 ## Languages (i18n)
 
