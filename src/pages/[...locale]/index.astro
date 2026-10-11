@@ -76,6 +76,7 @@ const tabs = [
         <div class="cover">
           <img src={a.img} alt="" loading="lazy" width="450" height="640" />
           <span class="badge score">★ {score(a.score)}</span>
+          {!a.isNew && <span class="tag">{t.continuing}</span>}
         </div>
         <h2>
           <span class="jp">{a.title}</span>

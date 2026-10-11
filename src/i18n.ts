@@ -44,6 +44,7 @@ const en = {
     votes: (n: string) => `(${n} votes on MAL)`,
     yourTime: '(your time)',
   },
+  continuing: 'Continuing', // card tag for shows that started in an earlier season
   noSynopsis: 'No synopsis yet.',
   unknown: 'Unknown',
 };

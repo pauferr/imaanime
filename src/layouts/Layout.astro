@@ -184,6 +184,17 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         font-variant-numeric: tabular-nums;
       }
       .badge.score { color: #facc15; }
+      .tag {
+        position: absolute; left: 8px; top: 8px;
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        background: rgb(255 255 255 / 0.9);
+        color: #1d1d1f;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
       .card:hover img { transform: scale(1.05); }
 
       .score { color: #eab308; font-weight: 700; }
