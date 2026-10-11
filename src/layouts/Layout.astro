@@ -1,16 +1,22 @@
 ---
-import { ZONES, flag } from '../lib/time';
+import { zoneOptions } from '../lib/time';
+import { localeUrl, ui, type Locale } from '../i18n';
 
 interface Props {
+  locale: Locale;
   title: string;
   description: string;
   subtitle: string;
 }
-const { title, description, subtitle } = Astro.props;
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const { locale, title, description, subtitle } = Astro.props;
+const t = ui[locale];
+const home = localeUrl(locale);
+const today = localeUrl(locale, 'today');
+const trim = (p: string) => p.replace(/\/$/, '');
+const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'page' : undefined);
 ---
 
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -20,41 +26,42 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
   <body>
     <header>
       <div>
-        <h1><a href="/">今 Ima Anime</a></h1>
+        <h1><a href={home}>今 Ima Anime</a></h1>
         <p>{subtitle}</p>
       </div>
       <nav>
-        <a href="/" aria-current={path === '/' ? 'page' : undefined}>Season</a>
-        <a href="/today" aria-current={path === '/today' ? 'page' : undefined}>Today</a>
+        <a href={home} aria-current={current(home)}>{t.nav.season}</a>
+        <a href={today} aria-current={current(today)}>{t.nav.today}</a>
       </nav>
-      <select id="tz" aria-label="Country / time zone for air times" title="Change country / time zone">
-        {ZONES.map(([cc, name, tz]) => <option value={tz}>{flag(cc)} {name}</option>)}
+      <select id="tz" aria-label={t.tz.label} title={t.tz.title}>
+        {zoneOptions(locale).map(({ tz, label }) => <option value={tz}>{label}</option>)}
       </select>
       <label class="switch">
         <span>JP</span>
-        <input type="checkbox" id="lang-en" />
+        <input type="checkbox" id="titles-en" />
         <span>EN</span>
       </label>
     </header>
 
-    <!-- placed before the content: page scripts read #tz and #lang-en already initialized -->
+    <!-- placed before the content: page scripts read #tz and #titles-en already initialized -->
     <script>
-      import { getTz } from '../lib/time';
+      import { city, getTz } from '../lib/time';
 
       const tz = document.getElementById('tz') as HTMLSelectElement;
       const initial = getTz();
       if (![...tz.options].some((o) => o.value === initial)) {
-        tz.add(new Option(`🌐 ${initial.split('/').pop()!.replaceAll('_', ' ')}`, initial), 0);
+        tz.add(new Option(`🌐 ${city(initial)}`, initial), 0);
       }
       tz.value = initial;
       tz.addEventListener('change', () => {
         try { localStorage.setItem('tz', tz.value); } catch {}
       });
 
-      const lang = document.getElementById('lang-en') as HTMLInputElement;
-      try { lang.checked = localStorage.getItem('lang') === 'en'; } catch {}
-      lang.addEventListener('change', () => {
-        try { localStorage.setItem('lang', lang.checked ? 'en' : 'jp'); } catch {}
+      // title language (JP/EN) is a separate preference from the UI locale
+      const titles = document.getElementById('titles-en') as HTMLInputElement;
+      try { titles.checked = localStorage.getItem('titles') === 'en'; } catch {}
+      titles.addEventListener('change', () => {
+        try { localStorage.setItem('titles', titles.checked ? 'en' : 'jp'); } catch {}
       });
     </script>
 
@@ -147,8 +154,8 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 
       /* ponytail: the switch only toggles CSS via :has(), zero JS to show/hide */
       .en { display: none; }
-      body:has(#lang-en:checked) .en { display: inline; }
-      body:has(#lang-en:checked) .jp { display: none; }
+      body:has(#titles-en:checked) .en { display: inline; }
+      body:has(#titles-en:checked) .jp { display: none; }
 
       /* base card styles; each page defines its own layout */
       .card {

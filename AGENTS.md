@@ -21,8 +21,9 @@ npm run preview  # serves dist/
 
 ```
 src/
-  pages/index.astro       season list: search, filters, sorting, modal
-  pages/today.astro       today's broadcasts with countdowns
+  i18n.ts                 UI strings per locale and locale helpers
+  pages/[...locale]/index.astro  season list: search, filters, sorting, modal
+  pages/[...locale]/today.astro  today's broadcasts with countdowns
   layouts/Layout.astro    <head>, shared header (nav, time zone picker, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
   lib/jikan.ts            paginated Jikan fetch, Anime type (already simplified data), in-memory cache
@@ -38,8 +39,19 @@ src/
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
 - **Air times**: Jikan gives weekday and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
-- **Preferences**: time zone (`tz`) and title language (`lang`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
-- **JP/EN switch**: pure CSS (`body:has(#lang-en:checked)`), no JS to show or hide titles.
+- **Preferences**: time zone (`tz`) and title language (`titles`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
+- **JP/EN title switch**: pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
+
+## Languages (i18n)
+
+The site ships in English only, but is structured for more locales:
+
+- **All UI strings** live in `src/i18n.ts` (`ui.en`). Pages and components read them through `t = ui[locale]`; client scripts get the locale from `<html lang>` via `pageLocale()`.
+- **No translated lists**: dates, times, numbers, durations, weekdays (`weekdayName`) and country names (`zoneOptions`, via `Intl.DisplayNames`) are formatted by `Intl` with the page locale.
+- **Routes**: pages live in `src/pages/[...locale]/` and `localePaths()` generates one copy per locale. The default locale has no prefix (`/`, `/today`); others get one (`/es/`, `/es/today`). Build internal links with `localeUrl(locale, path)`.
+- **Data stays as Jikan provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated.
+
+**To add a language**: add a dictionary to `ui` in `src/i18n.ts` (typed as `Dict`, so TypeScript flags any missing key). Nothing else is required. A language picker in the header and `hreflang` links are not built yet; add them together with the second language.
 
 ## Conventions
 

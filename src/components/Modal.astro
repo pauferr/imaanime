@@ -1,7 +1,12 @@
+---
+import type { Dict } from '../i18n';
+const { t } = Astro.props as { t: Dict['modal'] };
+---
+
 <!-- Opened with openModal() from src/lib/modal.ts -->
 <!-- closedby="any": native light dismiss on outside click (not in Safari yet; Esc and ✕ still work there) -->
 <dialog id="modal" closedby="any">
-  <form method="dialog"><button class="close" aria-label="Close">✕</button></form>
+  <form method="dialog"><button class="close" aria-label={t.close}>✕</button></form>
   <img data-f="img" alt="" />
   <div class="info">
     <h2 data-f="title"></h2>
@@ -12,12 +17,12 @@
     <ul class="tags" data-f="genres"></ul>
     <p data-f="synopsis"></p>
     <dl>
-      <dt>Episodes</dt><dd data-f="episodes"></dd>
-      <dt>Studio</dt><dd data-f="studios"></dd>
-      <dt>Aired</dt><dd data-f="aired"></dd>
-      <dt>Broadcast</dt><dd data-f="broadcast"></dd>
+      <dt>{t.episodes}</dt><dd data-f="episodes"></dd>
+      <dt>{t.studio}</dt><dd data-f="studios"></dd>
+      <dt>{t.aired}</dt><dd data-f="aired"></dd>
+      <dt>{t.broadcast}</dt><dd data-f="broadcast"></dd>
     </dl>
-    <a data-f="url" target="_blank" rel="noopener">View on MyAnimeList →</a>
+    <a data-f="url" target="_blank" rel="noopener">{t.viewOnMal}</a>
   </div>
 </dialog>
 

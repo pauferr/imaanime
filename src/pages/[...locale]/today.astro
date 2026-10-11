@@ -1,16 +1,21 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Modal from '../components/Modal.astro';
-import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
+import Layout from '../../layouts/Layout.astro';
+import Modal from '../../components/Modal.astro';
+import { seasonNow, toJsonScript } from '../../lib/jikan';
+import { localeOf, localePaths, seasonLabel, ui } from '../../i18n';
 
+export const getStaticPaths = localePaths;
+
+const locale = localeOf(Astro.params.locale);
+const t = ui[locale];
 const season = await seasonNow();
 // What airs "today" depends on the user's time zone: render everything and let the client filter
 const animes = season.data.filter((a) => a.day && a.time);
-const label = seasonLabel(season);
+const label = seasonLabel(t, season);
 ---
 
-<Layout title="Today · Ima Anime" description={`Anime airing today · ${label}`} subtitle={`Airing today · ${label}`}>
-  <h2 class="today-title" id="today-title">Today</h2>
+<Layout locale={locale} title={`${t.today.title} · Ima Anime`} description={t.today.description(label)} subtitle={t.today.subtitle(label)}>
+  <h2 class="today-title" id="today-title">{t.today.title}</h2>
 
   <main class="today">
     {animes.map((a, i) => (
@@ -28,21 +33,25 @@ const label = seasonLabel(season);
             <span class="time"></span>
             <span class="score">★ {a.score == null ? 'N/A' : a.score.toFixed(2)}</span>
           </p>
-          <p class="tsyn">{a.synopsis}</p>
+          <p class="tsyn">{a.synopsis ?? t.noSynopsis}</p>
         </div>
       </button>
     ))}
-    <p class="empty" hidden>No anime from this season airs today.</p>
+    <p class="empty" hidden>{t.today.empty}</p>
   </main>
 
-  <Modal />
+  <Modal t={t.modal} />
 
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
-    import type { Anime } from '../lib/jikan';
-    import { airingToday, currentTz, timeIn } from '../lib/time';
-    import { openModal } from '../lib/modal';
+    import type { Anime } from '../../lib/jikan';
+    import { airingToday, currentTz, timeIn } from '../../lib/time';
+    import { openModal } from '../../lib/modal';
+    import { pageLocale, ui } from '../../i18n';
+
+    const locale = pageLocale();
+    const t = ui[locale].today;
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
     const list = document.querySelector('.today')!;
@@ -50,7 +59,7 @@ const label = seasonLabel(season);
     const empty = list.querySelector<HTMLElement>('.empty')!;
     const title = document.getElementById('today-title')!;
 
-    const duration = new Intl.DurationFormat('en', { style: 'narrow' }); // "2h 5m 12s"
+    const duration = new Intl.DurationFormat(locale, { style: 'narrow' }); // "2h 5m 12s"
     const countdown = (ms: number) => {
       const s = Math.floor(ms / 1000);
       return duration.format({ hours: Math.floor(s / 3600), minutes: Math.floor((s % 3600) / 60), seconds: s % 60 });
@@ -61,7 +70,7 @@ const label = seasonLabel(season);
     function tick() {
       const tz = currentTz();
       const now = new Date();
-      title.textContent = `Today, ${now.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })}`;
+      title.textContent = t.heading(now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz }));
 
       const shown: { card: HTMLElement; at: number; aired: boolean }[] = [];
       for (const card of cards) {
@@ -75,8 +84,8 @@ const label = seasonLabel(season);
         const left = at!.getTime() - now.getTime();
         const aired = left <= 0;
         card.classList.toggle('aired', aired);
-        card.querySelector('.countdown')!.textContent = aired ? '✓ Aired' : `⏱ ${countdown(left)}`;
-        card.querySelector('.time')!.textContent = `🕒 ${timeIn(at!, tz)}`;
+        card.querySelector('.countdown')!.textContent = aired ? t.aired : `⏱ ${countdown(left)}`;
+        card.querySelector('.time')!.textContent = `🕒 ${timeIn(at!, tz, locale)}`;
         shown.push({ card, at: at!.getTime(), aired });
       }
 

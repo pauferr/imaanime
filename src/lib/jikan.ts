@@ -10,13 +10,13 @@ export type Anime = {
   img: string;
   title: string;
   titleEn: string | null;
-  synopsis: string;
+  synopsis: string | null;
   score: number | null;
   votes: number | null;
   episodes: number | null;
   day: string | null; // "Saturdays", Japan time
   time: string | null; // "23:30", Japan time
-  broadcast: string; // original text, e.g. "Saturdays at 23:30 (JST)"
+  broadcast: string | null; // original text, e.g. "Saturdays at 23:30 (JST)"
   from: string | null; // ISO premiere date
   aired: string; // original text, e.g. "Oct 4, 2026 to ?"
   studios: string[];
@@ -38,13 +38,13 @@ const lean = (a: any): Anime => ({
   img: a.images.webp.large_image_url,
   title: a.title,
   titleEn: a.title_english,
-  synopsis: (a.synopsis ?? 'No synopsis yet.').replace(/\s*\[Written by MAL Rewrite\]\s*$/, ''),
+  synopsis: a.synopsis?.replace(/\s*\[Written by MAL Rewrite\]\s*$/, '') ?? null,
   score: a.score,
   votes: a.scored_by,
   episodes: a.episodes,
   day: a.broadcast.day,
   time: a.broadcast.time,
-  broadcast: a.broadcast.string ?? 'Unknown',
+  broadcast: a.broadcast.string,
   from: a.aired.from,
   aired: a.aired.string,
   studios: a.studios.map((s: any) => s.name),
@@ -74,9 +74,6 @@ export function seasonNow() {
   });
   return cache;
 }
-
-export const seasonLabel = (s: { season: string; year: number | string }) =>
-  s.season ? `${s.season[0].toUpperCase()}${s.season.slice(1)} ${s.year}` : 'Current season';
 
 // For <script type="application/json">: escaping "<" stops a "</script>" in the data from closing the tag
 export const toJsonScript = (data: unknown) => JSON.stringify(data).replaceAll('<', '\\u003c');

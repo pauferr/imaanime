@@ -1,43 +1,46 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Modal from '../components/Modal.astro';
-import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
+import Layout from '../../layouts/Layout.astro';
+import Modal from '../../components/Modal.astro';
+import { seasonNow, toJsonScript } from '../../lib/jikan';
+import { WEEK, weekdayName } from '../../lib/time';
+import { localeOf, localePaths, seasonLabel, ui } from '../../i18n';
 
+export const getStaticPaths = localePaths;
+
+const locale = localeOf(Astro.params.locale);
+const t = ui[locale];
 const season = await seasonNow();
 const animes = season.data;
-const label = seasonLabel(season);
+const label = seasonLabel(t, season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
 const genres = [...new Set(animes.flatMap((a) => a.genres))].sort();
-const DAYS: Record<string, string> = {
-  Mondays: 'Monday', Tuesdays: 'Tuesday', Wednesdays: 'Wednesday', Thursdays: 'Thursday',
-  Fridays: 'Friday', Saturdays: 'Saturday', Sundays: 'Sunday',
-};
+const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
 ---
 
-<Layout title={`Ima Anime · ${label}`} description={`Anime airing now: ${label}`} subtitle={`Airing now · ${label}`}>
+<Layout locale={locale} title={`Ima Anime · ${label}`} description={t.index.description(label)} subtitle={t.index.subtitle(label)}>
   <form class="filters" id="filters" onsubmit="return false">
     <div class="row">
-      <input type="search" name="q" placeholder="Search by title…  ( / )" aria-label="Search by title" autocomplete="off" />
-      <select name="day" aria-label="Air day">
-        <option value="">Any day</option>
-        {Object.entries(DAYS).map(([v, l]) => <option value={v}>{l}</option>)}
+      <input type="search" name="q" placeholder={t.index.search} aria-label={t.index.searchLabel} autocomplete="off" />
+      <select name="day" aria-label={t.index.day}>
+        <option value="">{t.index.anyDay}</option>
+        {days.map((d) => <option value={d}>{weekdayName(d, locale)}</option>)}
       </select>
-      <select name="sort" aria-label="Sort by">
-        <option value="new">Newest</option>
-        <option value="score">Top rated</option>
-        <option value="votes">Most popular</option>
-        <option value="name">Title A–Z</option>
+      <select name="sort" aria-label={t.index.sort}>
+        <option value="new">{t.index.sortNew}</option>
+        <option value="score">{t.index.sortScore}</option>
+        <option value="votes">{t.index.sortVotes}</option>
+        <option value="name">{t.index.sortName}</option>
       </select>
     </div>
     <fieldset class="chips">
-      <legend>Genres</legend>
+      <legend>{t.index.genres}</legend>
       {genres.map((g) => (
         <label><input type="checkbox" name="genre" value={g} /><span>{g}</span></label>
       ))}
     </fieldset>
     <p class="status">
       <span id="count"></span>
-      <button type="reset" id="clear">Clear filters</button>
+      <button type="reset" id="clear">{t.index.clear}</button>
     </p>
   </form>
 
@@ -52,27 +55,31 @@ const DAYS: Record<string, string> = {
           </h2>
           <p class="meta-line">
             <span class="score">★ {score(a.score)}</span>
-            <span class="when">{DAYS[a.day ?? ''] ?? '?'}</span>
-            <span>{a.episodes ?? '?'} eps</span>
+            <span class="when">{a.day ? weekdayName(a.day, locale) : '?'}</span>
+            <span>{t.index.eps(a.episodes ?? '?')}</span>
           </p>
-          <p class="syn">{a.synopsis}</p>
+          <p class="syn">{a.synopsis ?? t.noSynopsis}</p>
         </div>
       </button>
     ))}
-    <p class="empty" hidden>No anime matches these filters.</p>
+    <p class="empty" hidden>{t.index.empty}</p>
   </main>
 
-  <Modal />
+  <Modal t={t.modal} />
 
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
-    import type { Anime } from '../lib/jikan';
-    import { currentTz, localSlot } from '../lib/time';
-    import { openModal } from '../lib/modal';
+    import type { Anime } from '../../lib/jikan';
+    import { currentTz, localSlot } from '../../lib/time';
+    import { openModal } from '../../lib/modal';
+    import { pageLocale, ui } from '../../i18n';
+
+    const locale = pageLocale();
+    const t = ui[locale];
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
-    const toggle = document.getElementById('lang-en') as HTMLInputElement;
+    const toggle = document.getElementById('titles-en') as HTMLInputElement;
     const tzSelect = document.getElementById('tz') as HTMLSelectElement;
 
     // --- filters ---
@@ -107,10 +114,10 @@ const DAYS: Record<string, string> = {
         new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO strings sort correctly as text; missing dates go last
         score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
         votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
-        name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), 'en'),
+        name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), locale),
       }[sort];
       grid.prepend(...cards.sort(by));
-      document.getElementById('count')!.textContent = `${n} of ${cards.length} anime`;
+      document.getElementById('count')!.textContent = t.index.count(n, cards.length);
       grid.querySelector<HTMLElement>('.empty')!.hidden = n > 0;
       document.getElementById('clear')!.hidden = !q && !day && !picked.length;
       // state lives in the URL: shareable and survives reloads
@@ -128,7 +135,7 @@ const DAYS: Record<string, string> = {
     // air times and the day filter follow the selected time zone
     function renderTz() {
       for (const c of cards) {
-        const slot = localSlot(anime(c), currentTz());
+        const slot = localSlot(anime(c), currentTz(), locale);
         c.dataset.day = slot?.day ?? '';
         c.querySelector('.when')!.textContent = slot?.short ?? '?';
       }
