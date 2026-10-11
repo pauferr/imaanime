@@ -92,7 +92,7 @@ const tabs = [
               </span>
             )}
           </div>
-          {!a.isNew && <span class="tag">{t.continuing}</span>}
+          {a.isNew ? <span class="tag new">{t.isNew}</span> : <span class="tag">{t.continuing}</span>}
         </div>
         <h2>
           <span class="jp">{a.title}</span>

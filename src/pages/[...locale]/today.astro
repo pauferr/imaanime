@@ -23,7 +23,7 @@ const label = seasonLabel(t, season);
         <div class="cover">
           <img src={a.img} alt="" loading="lazy" width="450" height="640" />
           <span class="badge countdown"></span>
-          {!a.isNew && <span class="tag">{t.continuing}</span>}
+          {a.isNew ? <span class="tag new">{t.isNew}</span> : <span class="tag">{t.continuing}</span>}
         </div>
         <div class="tbody">
           <h3>
