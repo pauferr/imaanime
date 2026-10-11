@@ -45,7 +45,7 @@ src/
 ## How it works
 
 - **Data at build time**: `seasonNow()` fetches the current season from MAL (usually a single request of up to 500 entries; adult content excluded) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call MAL.
-- **Which shows**: only those that start this season and haven't finished, excluding movies and music videos. MAL's season list also includes long-running continuing shows; they are filtered out on purpose.
+- **Which shows**: everything airing now (this season's new shows, plus continuing ones that started in earlier seasons) and this season's shows that haven't premiered yet. Finished shows, movies and music videos are excluded.
 - **Dev cache**: in `dev`, the last good MAL response is saved to `node_modules/.cache/imaanime/season-now.json` and reused for 6 hours, so reloads and restarts don't wait on MAL. Delete that file to force a refetch. `build` never uses it.
 - **When MAL fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.

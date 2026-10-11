@@ -67,16 +67,15 @@ async function load() {
     nodes.push(...json.data.map((d: any) => d.node));
     url = json.paging?.next;
   }
-  // ponytail: only shows that start this season and are still airing or about to; MAL's season list also
-  // includes long-running continuing shows, finished ones, movies and music videos
-  const fresh = nodes.filter(
+  // Airing now: this season's shows (airing or about to premiere) plus continuing ones from earlier seasons.
+  // MAL's season list also includes finished shows, movies and music videos, which are dropped.
+  const startsNow = (a: any) => a.start_season?.year === year && a.start_season?.season === season;
+  const airing = nodes.filter(
     (a) =>
-      a.start_season?.year === year &&
-      a.start_season?.season === season &&
-      a.status !== 'finished_airing' &&
-      !['movie', 'music'].includes(a.media_type)
+      !['movie', 'music'].includes(a.media_type) &&
+      (a.status === 'currently_airing' || (a.status === 'not_yet_aired' && startsNow(a)))
   );
-  return { season, year, data: fresh.map(lean) };
+  return { season, year, data: airing.map(lean) };
 }
 
 type Season = Awaited<ReturnType<typeof load>>;
