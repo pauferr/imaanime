@@ -1,48 +1,20 @@
 # 今 Ima Anime
 
-Animes en emisión de la season actual, con la nota de MyAnimeList y los horarios en la hora local de cada usuario.
+**Todo el anime que se está emitiendo esta temporada, en un solo vistazo.**
 
-- **`/`**: todos los animes de la season, con buscador, filtros por género y día, orden y switch de nombre JP/EN.
-- **`/today`**: lo que se emite hoy, con cuenta atrás hasta el nuevo capítulo y la insignia "Emitido".
+*Ima* (今) significa "ahora" en japonés: aquí encuentras el anime de ahora.
 
-Hecho con [Astro](https://astro.build) (sitio estático, sin frameworks de UI) y datos de [Jikan](https://jikan.moe), la API no oficial y gratuita de MyAnimeList.
+## Qué puedes hacer
 
-## Desarrollo
+- **Ver la temporada completa**: todos los animes que se están emitiendo, con su portada, una breve sinopsis y la nota media de MyAnimeList.
+- **Buscar y filtrar**: encuentra un anime por su nombre o filtra por género y por día de emisión. Ordénalos por los más recientes, los mejor valorados o los más populares.
+- **Nombre original o en inglés**: con un clic cambias entre el título japonés y el título en inglés.
+- **Ver la información completa**: pulsa en cualquier anime para ver sus detalles: sinopsis completa, estudio, episodios, géneros y horario.
+- **Horarios en tu hora**: la web detecta tu país y muestra cada emisión en tu hora local. Si viajas o prefieres otro país, cámbialo desde la bandera de arriba.
+- **Qué sale hoy**: en la sección **Hoy** tienes los estrenos del día ordenados por hora, con una cuenta atrás hasta el próximo capítulo. Los que ya se han emitido aparecen al final, marcados en verde.
 
-Requiere Node 22.12 o superior.
+## De dónde salen los datos
 
-```sh
-npm install
-npm run dev      # http://localhost:4321
-npm run build    # genera dist/
-npm run preview  # sirve dist/
-```
+La información y las notas vienen de [MyAnimeList](https://myanimelist.net), a través de [Jikan](https://jikan.moe), y se actualizan varias veces al día.
 
-Si Jikan no responde, `npm run dev` usa los datos de prueba de `src/data/season-now.json` y avisa en la consola. `npm run build` falla a propósito para no publicar datos falsos.
-
-## Cómo funciona
-
-- **Datos**: se descargan de Jikan una vez, al compilar (`src/lib/jikan.ts`). La página publicada es HTML estático, así que los visitantes nunca llaman a Jikan.
-- **Zona horaria**: se detecta en el navegador y se puede cambiar con el selector de bandera; se guarda en `localStorage`. Jikan da los horarios en hora de Japón y se convierten en el cliente (`src/lib/time.ts`).
-- **Preferencias del usuario** (zona, idioma del nombre): en `localStorage`. Los filtros de `/` van en la URL, así que se pueden compartir.
-
-```
-src/
-  pages/index.astro       listado de la season
-  pages/today.astro       emisiones de hoy con cuenta atrás
-  layouts/Layout.astro    cabecera común (menú, bandera, switch JP/EN) y estilos base
-  components/Modal.astro  modal de detalle
-  lib/jikan.ts            descarga y simplificación de los datos de Jikan
-  lib/time.ts             horarios: hora de Japón → hora local
-  lib/modal.ts            rellena y abre el modal
-  data/season-now.json    datos de prueba (mismo formato que Jikan)
-```
-
-## Despliegue (Vercel)
-
-1. Importar el repositorio en Vercel; detecta Astro sin configurar nada.
-2. **Datos actualizados**: `.github/workflows/refresh.yml` pide a Vercel una nueva compilación cada 6 horas. Para activarlo:
-   - Vercel → Project → Settings → Git → **Deploy Hooks**: crear uno.
-   - GitHub → Settings → Secrets and variables → Actions: guardar su URL como `VERCEL_DEPLOY_HOOK`.
-
-   También se puede lanzar a mano desde la pestaña Actions ("Refrescar datos" → Run workflow). Si Jikan está caído, la compilación falla y Vercel mantiene la versión anterior.
+Ima Anime es un proyecto independiente y no tiene relación con MyAnimeList.
