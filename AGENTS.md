@@ -47,7 +47,7 @@ src/
 - Simplest thing that works: native platform features before dependencies, no speculative abstractions. Deliberate shortcuts carry a `ponytail:` comment explaining their limits.
 - External data is inserted with `textContent`, never `innerHTML`.
 - Basic accessibility: native interactive elements (`<button>`, `<dialog>`, `<select>`), `:focus-visible`, and `prefers-reduced-motion`.
-- Colors are CSS variables on `:root`, with dark mode via `prefers-color-scheme`.
+- Colors are CSS variables on `:root` using `light-dark()`, which follows the system theme. Page and modal transitions use native View Transitions and `@starting-style`.
 
 ## Deployment
 
