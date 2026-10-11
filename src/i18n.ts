@@ -52,6 +52,9 @@ const en = {
   },
   modal: {
     close: 'Close',
+    readMore: 'Read more',
+    showLess: 'Show less',
+    releaseToClose: 'Release to close',
     episodes: 'Episodes',
     format: 'Format',
     episodesOf: (aired: number, total: number | string) => `${aired} of ${total}`,
