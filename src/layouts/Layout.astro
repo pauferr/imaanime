@@ -24,7 +24,7 @@ const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefi
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    {umamiId && <script is:inline defer src="https://cloud.umami.is/script.js" data-website-id={umamiId} data-domains="imaanime.vercel.app"></script>}
+    {umamiId && <script is:inline defer src="https://cloud.umami.is/script.js" data-website-id={umamiId} data-domains="imaanime.vercel.app" data-exclude-search="true"></script>}
   </head>
   <body>
     <header>
