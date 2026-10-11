@@ -40,7 +40,7 @@ const tabs = [
       <legend class="sr-only">{t.index.tabs.label}</legend>
       {tabs.map(([value, name, n]) => (
         <label>
-          <input type="radio" name="show" value={value} checked={value === 'new'} />
+          <input type="radio" name="show" value={value} checked={value === 'all'} />
           <span>{name} <small>{n}</small></span>
         </label>
       ))}
@@ -145,7 +145,7 @@ const tabs = [
       return toggle.checked ? a.titleEn ?? a.title : a.title;
     };
     // defaults are left out of the URL
-    const DEFAULTS: Record<string, string> = { show: 'new', sort: 'new' };
+    const DEFAULTS: Record<string, string> = { show: 'all', sort: 'new' };
 
     function apply() {
       const f = new FormData(form);
