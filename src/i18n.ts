@@ -44,6 +44,8 @@ const en = {
     heading: (date: string) => `Today, ${date}`,
     empty: 'No anime from this season airs today.',
     aired: '✓ Aired',
+    upNext: 'Up next',
+    airedToday: 'Aired today',
     // "S03E05" when the season is known, "E05" otherwise
     episode: (n: number, season?: number | null) =>
       `${season ? `S${String(season).padStart(2, '0')}` : ''}E${String(n).padStart(2, '0')}`,

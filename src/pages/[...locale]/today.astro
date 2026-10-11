@@ -20,7 +20,11 @@ const label = seasonLabel(t, season);
     <input type="search" id="q" placeholder={t.index.search} aria-label={t.index.searchLabel} autocomplete="off" />
   </div>
 
-  <main class="today">
+  <!-- two sections: what's next (soonest first) and what already aired (most recent first); cards move between them -->
+  <main class="today-main">
+    <section class="day-section" id="upnext" hidden>
+      <h3>{t.today.upNext} <small></small></h3>
+      <div class="today">
     {animes.map((a, i) => (
       <button class="card" data-i={i} aria-haspopup="dialog" hidden>
         <div class="cover">
@@ -47,6 +51,12 @@ const label = seasonLabel(t, season);
         </div>
       </button>
     ))}
+      </div>
+    </section>
+    <section class="day-section" id="aired" hidden>
+      <h3>{t.today.airedToday} <small></small></h3>
+      <div class="today"></div>
+    </section>
     <p class="empty" hidden>{t.today.empty}</p>
   </main>
 
@@ -64,9 +74,11 @@ const label = seasonLabel(t, season);
     const t = ui[locale].today;
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
-    const list = document.querySelector('.today')!;
+    const list = document.querySelector('.today-main')!;
     const cards = [...list.querySelectorAll<HTMLElement>('.card')];
     const empty = list.querySelector<HTMLElement>('.empty')!;
+    const upNext = document.getElementById('upnext')!;
+    const airedToday = document.getElementById('aired')!;
     const title = document.getElementById('today-title')!;
     const search = document.getElementById('q') as HTMLInputElement;
     // lowercase without diacritics, same as the search on /
@@ -106,13 +118,20 @@ const label = seasonLabel(t, season);
         shown.push({ card, at: at.getTime(), aired });
       }
 
-      // by air time; already aired ones last
-      shown.sort((x, y) => +x.aired - +y.aired || x.at - y.at);
-      const key = shown.map((s) => s.card.dataset.i).join();
+      // Up next: soonest first. Aired today: most recent first (what you can watch right now is at the top)
+      const next = shown.filter((s) => !s.aired).sort((x, y) => x.at - y.at);
+      const done = shown.filter((s) => s.aired).sort((x, y) => y.at - x.at);
+      const ids = (l: typeof shown) => l.map((s) => s.card.dataset.i).join();
+      const key = `${ids(next)}|${ids(done)}`;
       if (key !== order) {
         // only reorder on change: moving nodes every second would break hover
-        list.prepend(...shown.map((s) => s.card));
+        upNext.querySelector('.today')!.prepend(...next.map((s) => s.card));
+        airedToday.querySelector('.today')!.prepend(...done.map((s) => s.card));
         order = key;
+      }
+      for (const [section, items] of [[upNext, next], [airedToday, done]] as const) {
+        section.hidden = !items.length;
+        section.querySelector('small')!.textContent = String(items.length);
       }
       empty.hidden = shown.length > 0;
     }
@@ -157,13 +176,23 @@ const label = seasonLabel(t, season);
       color: var(--text);
     }
     #q:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .day-section > h3 {
+      max-width: 1200px;
+      margin: 0.5rem auto 0;
+      padding: 0 16px 0.75rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .day-section > h3 small { margin-left: 0.35rem; font-size: inherit; opacity: 0.7; }
     .today {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 1.25rem;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 16px 3rem;
+      padding: 0 16px 2rem;
     }
     .card { display: flex; flex-direction: column; }
     .card.aired { opacity: 0.75; }
