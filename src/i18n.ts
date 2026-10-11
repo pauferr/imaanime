@@ -17,7 +17,7 @@ const en = {
     done: 'Done',
   },
   index: {
-    description: (season: string) => `Anime airing now: ${season}`,
+    description: (season: string) => `Every anime airing this season (${season}): scores, local air times and what's on today.`,
     subtitle: (season: string) => `Airing now · ${season}`,
     search: 'Search by title…  ( / )',
     searchLabel: 'Search by title',
@@ -39,7 +39,7 @@ const en = {
   },
   today: {
     title: 'Today',
-    description: (season: string) => `Anime airing today · ${season}`,
+    description: (season: string) => `Anime airing today with countdowns and episode numbers · ${season}`,
     subtitle: (season: string) => `Airing today · ${season}`,
     heading: (date: string) => `Today, ${date}`,
     empty: 'No anime from this season airs today.',

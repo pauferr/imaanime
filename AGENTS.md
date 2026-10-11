@@ -72,6 +72,11 @@ The site ships in English only, but is structured for more locales:
 
 **To add a language**: add a dictionary to `ui` in `src/i18n.ts` (typed as `Dict`, so TypeScript flags any missing key). Nothing else is required. A language picker in the header and `hreflang` links are not built yet; add them together with the second language.
 
+## Share previews
+
+- `Layout.astro` emits canonical, Open Graph and Twitter card tags from each page's `title`/`description` props, with absolute URLs from `site` in `astro.config.mjs` (Vercel's `VERCEL_PROJECT_PRODUCTION_URL` at build time, else `SITE_URL`, else localhost).
+- The share image is a static `public/og.png` (1200×630) plus `public/apple-touch-icon.png`; both were rendered once from SVG with sharp. Regenerate them by hand if the branding changes.
+
 ## Analytics (Umami)
 
 - `Layout.astro` adds Umami's script only when `UMAMI_WEBSITE_ID` is set and it's a production build. Pageviews are automatic.

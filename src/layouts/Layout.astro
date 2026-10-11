@@ -13,6 +13,10 @@ const home = localeUrl(locale);
 const today = localeUrl(locale, 'today');
 const trim = (p: string) => p.replace(/\/$/, '');
 const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'page' : undefined);
+// share previews (Open Graph / Twitter) need absolute URLs; `site` is set in astro.config.mjs
+// without trailing slash (Vercel serves both /today and /today/; the nav links use /today)
+const canonical = new URL(trim(Astro.url.pathname) || '/', Astro.site ?? Astro.url);
+const ogImage = new URL('/og.png', Astro.site ?? Astro.url);
 // Umami analytics: production builds only, and only where the website ID is configured (forks don't report here).
 // Served from our own domain (/s/*, proxied to Umami by vercel.json) so ad blockers don't drop it.
 const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefined;
@@ -25,6 +29,20 @@ const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefi
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#e11d48" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Ima Anime" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Ima Anime: every anime airing this season, at a glance." />
+    <meta name="twitter:card" content="summary_large_image" />
     {umamiId && <script is:inline defer src="/s/script.js" data-website-id={umamiId} data-host-url="/s" data-exclude-search="true"></script>}
   </head>
   <body>

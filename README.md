@@ -50,6 +50,7 @@ To build the static site: `npm run build` (output in `dist/`), and `npm run prev
 | Variable | Required | What it is |
 |---|---|---|
 | `MAL_CLIENT_ID` | **Yes** | MyAnimeList API client ID ([create one](https://myanimelist.net/apiconfig)). The build fails without it. |
+| `SITE_URL` | No | Public URL of your site (e.g. `https://example.com`), for link previews. Not needed on Vercel, which provides it automatically. |
 | `UMAMI_WEBSITE_ID` | No | [Umami Cloud](https://cloud.umami.is) website ID. Analytics only load in production builds where it's set; leave it empty to disable them. |
 
 AniList needs no key.
