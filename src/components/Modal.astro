@@ -16,9 +16,7 @@ const { t } = Astro.props as { t: Dict['modal'] };
       <strong data-f="score"></strong> <span data-f="votes"></span>
     </p>
     <ul class="tags" data-f="genres"></ul>
-    <p data-f="synopsis" class="synopsis"></p>
-    <!-- phones: the synopsis is clamped to 4 lines; shown by openModal() only when it overflows -->
-    <button type="button" class="more" hidden data-more={t.readMore} data-less={t.showLess}>{t.readMore}</button>
+    <p data-f="synopsis"></p>
     <!-- rows wrapped in <div> can be hidden as a whole when there is no data -->
     <dl>
       <dt>{t.format}</dt><dd data-f="format"></dd>
@@ -32,21 +30,11 @@ const { t } = Astro.props as { t: Dict['modal'] };
     </dl>
     <a data-f="url" target="_blank" rel="noopener">{t.viewOnMal}</a>
   </div>
-  <!-- shown by lib/sheet.ts while pushing up past the end of the sheet -->
-  <p class="release-hint" hidden>{t.releaseToClose}</p>
 </dialog>
 
 <script>
   import { sheet } from '../lib/sheet';
-  const modal = document.getElementById('modal')!;
-  sheet(modal, { closeAtEnd: true });
-
-  // "Read more" / "Show less" for the clamped synopsis (phones)
-  const more = modal.querySelector<HTMLButtonElement>('.more')!;
-  more.addEventListener('click', () => {
-    const open = modal.querySelector('.synopsis')!.classList.toggle('expanded');
-    more.textContent = open ? more.dataset.less! : more.dataset.more!;
-  });
+  sheet(document.getElementById('modal')!);
 </script>
 
 <!-- global: openModal() creates <li> elements in JS, which would not get the scoped-style attribute -->
@@ -97,41 +85,5 @@ const { t } = Astro.props as { t: Dict['modal'] };
     #modal .info > :not(h2, .alt, .meta, .tags) { grid-column: 1 / -1; }
     #modal h2 { font-size: 1.2rem; }
     #modal .info > a { padding-bottom: 0.5rem; }
-    #modal .synopsis:not(.expanded) {
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 0.25rem;
-    }
-    #modal .more {
-      justify-self: start;
-      margin: 0 0 0.75rem;
-      padding: 0.25rem 0;
-      border: 0;
-      background: none;
-      color: var(--accent);
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    /* "Release to close": a pill pinned to the bottom of the sheet while pushing up past the end */
-    #modal .release-hint {
-      grid-column: 1 / -1;
-      position: sticky;
-      bottom: calc(0.75rem + env(safe-area-inset-bottom));
-      justify-self: center;
-      margin: 0;
-      padding: 0.4rem 0.9rem;
-      border-radius: 999px;
-      background: var(--bg);
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 600;
-      box-shadow: var(--shadow-hover);
-      transition: background 0.15s, color 0.15s;
-    }
-    #modal .release-hint[data-ready] { background: var(--accent); color: #fff; }
   }
 </style>

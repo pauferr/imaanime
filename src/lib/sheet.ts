@@ -1,13 +1,12 @@
 // Shared behaviour for the overlays (#modal, #settings, #filters-panel). On phones the CSS in Layout.astro turns
 // them into bottom sheets; this adds what CSS can't:
 // - on phones: drag the top bar (.sheet-bar) down, or pull the content down when it's scrolled to the top, to close;
-//   with { closeAtEnd: true } (detail sheet), pushing up past the end shows "Release to close" (.release-hint);
 // - tap outside to close a <dialog> (Safari doesn't support closedby="any"; popovers light-dismiss natively);
 // - the Back button closes the open overlay instead of leaving the page.
 
 const PHONE = '(max-width: 640px)';
 
-export function sheet(el: HTMLElement, opts: { closeAtEnd?: boolean } = {}) {
+export function sheet(el: HTMLElement) {
   const isDialog = el instanceof HTMLDialogElement;
   const isOpen = () => (isDialog ? (el as HTMLDialogElement).open : el.matches(':popover-open'));
   const close = () => (isDialog ? (el as HTMLDialogElement).close() : el.hidePopover());
@@ -54,13 +53,11 @@ export function sheet(el: HTMLElement, opts: { closeAtEnd?: boolean } = {}) {
     }
   };
 
-  // Gestures on the content (phones). Touch events, not pointer events: the browser cancels pointer events as
-  // soon as it starts scrolling. A gesture only takes over when scrolling can't go further that way.
-  const hint = el.querySelector<HTMLElement>('.release-hint');
+  // Pull down from the content (phones), only when it's scrolled to the top; otherwise the content scrolls.
+  // Touch events, not pointer events: the browser cancels pointer events as soon as it starts scrolling.
   const atTop = () => el.scrollTop <= 0;
-  const atEnd = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
   let tY = 0, tT = 0, pull = 0;
-  let mode: 'down' | 'up' | 'scroll' | null = null;
+  let mode: 'down' | 'scroll' | null = null;
   el.addEventListener(
     'touchstart',
     (e) => {
@@ -79,30 +76,19 @@ export function sheet(el: HTMLElement, opts: { closeAtEnd?: boolean } = {}) {
       if (mode === null) {
         if (Math.abs(dy) < 6) return;
         if (dy > 0 && atTop()) mode = 'down';
-        else if (dy < 0 && opts.closeAtEnd && atEnd()) mode = 'up';
         else return void (mode = 'scroll');
         el.style.transition = 'none';
       }
       e.preventDefault(); // the sheet moves instead of the page scrolling
-      if (mode === 'down') {
-        pull = Math.max(0, dy);
-        el.style.translate = `0 ${pull}px`;
-      } else {
-        pull = Math.max(0, -dy);
-        el.style.translate = `0 ${-Math.min(pull * 0.3, 50)}px`; // rises a little, with resistance
-        if (hint) {
-          hint.hidden = false;
-          hint.toggleAttribute('data-ready', pull > 90);
-        }
-      }
+      pull = Math.max(0, dy);
+      el.style.translate = `0 ${pull}px`;
     },
     { passive: false }
   );
   const touchEnd = () => {
-    if (mode !== 'down' && mode !== 'up') return;
-    const flick = mode === 'down' && pull > 20 && pull / (performance.now() - tT) > 0.5;
-    if (hint) hint.hidden = true;
-    release(mode === 'down' ? pull > 80 || flick : pull > 90);
+    if (mode !== 'down') return;
+    const flick = pull > 20 && pull / (performance.now() - tT) > 0.5;
+    release(pull > 80 || flick);
     mode = null;
   };
   el.addEventListener('touchend', touchEnd);

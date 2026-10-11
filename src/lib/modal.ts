@@ -26,12 +26,6 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
   set('votes', a.votes ? t.votes(a.votes.toLocaleString(locale)) : '');
   set('synopsis', a.synopsis ?? ui[locale].noSynopsis);
-  // phones clamp the synopsis: start collapsed, offer "Read more" only if it overflows (checked once laid out)
-  const synopsis = field('synopsis');
-  const more = modal.querySelector<HTMLButtonElement>('.more')!;
-  synopsis.classList.remove('expanded');
-  more.textContent = more.dataset.more!;
-  const syncMore = () => (more.hidden = synopsis.scrollHeight <= synopsis.clientHeight + 1);
   set('format', ui[locale].formats.name[a.format] ?? a.format);
   // AniList schedule: the next episode, and how many have aired (the one before it)
   const now = Date.now() / 1000;
@@ -63,7 +57,6 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
 
   if (!cover || !document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     modal.showModal();
-    syncMore();
     return;
   }
   // only one element may hold the name at a time: card in the old snapshot, modal image in the new one
@@ -73,6 +66,5 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
     img.style.viewTransitionName = 'cover';
     modal.showModal();
   });
-  transition.updateCallbackDone.then(syncMore);
   transition.finished.finally(() => (img.style.viewTransitionName = ''));
 }
