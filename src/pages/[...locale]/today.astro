@@ -47,7 +47,7 @@ const label = seasonLabel(t, season);
 
   <script>
     import type { Anime } from '../../lib/mal';
-    import { airingToday, currentTz, timeIn } from '../../lib/time';
+    import { airingToday, localTz, timeIn } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
@@ -69,7 +69,7 @@ const label = seasonLabel(t, season);
     let order = '';
     // ponytail: recomputes everything every second; there are few cards. This also rolls over at midnight for free.
     function tick() {
-      const tz = currentTz();
+      const tz = localTz();
       const now = new Date();
       title.textContent = t.heading(now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz }));
 
@@ -105,7 +105,6 @@ const label = seasonLabel(t, season);
       const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
       if (card) openModal(animes[Number(card.dataset.i)], card.querySelector('img')!);
     });
-    document.getElementById('tz')!.addEventListener('change', tick);
     tick();
     setInterval(tick, 1000);
   </script>

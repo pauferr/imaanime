@@ -34,10 +34,10 @@ src/
   i18n.ts                 UI strings per locale and locale helpers
   pages/[...locale]/index.astro  season list: New/Continuing/All tabs, poster grid, search, sort, filters popover, modal
   pages/[...locale]/today.astro  today's broadcasts with countdowns
-  layouts/Layout.astro    <head>, shared header (nav, time zone picker, JP/EN switch), CSS variables and base styles
+  layouts/Layout.astro    <head>, shared header (nav, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
   lib/mal.ts              MAL season fetch and filtering, Anime type (already simplified data), caches
-  lib/time.ts             countries/time zones, Japan → local time conversion, "does it air today?"
+  lib/time.ts             Japan → local time conversion, "does it air today?", date/weekday formatting
   lib/modal.ts            openModal(anime): fills and opens the modal
 .github/workflows/refresh.yml  rebuilds on Vercel every 6 h
 ```
@@ -51,7 +51,7 @@ src/
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
 - **Air times**: MAL gives weekday (`"saturday"`) and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
-- **Preferences**: time zone (`tz`) and title language (`titles`) are stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted).
+- **Time zone**: always the browser's (`localTz()`), no picker. **Title language** (`titles`) is stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted).
 - **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Genres are listed by frequency.
 - **JP/EN title switch**: pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
 
@@ -60,7 +60,7 @@ src/
 The site ships in English only, but is structured for more locales:
 
 - **All UI strings** live in `src/i18n.ts` (`ui.en`). Pages and components read them through `t = ui[locale]`; client scripts get the locale from `<html lang>` via `pageLocale()`.
-- **No translated lists**: dates, times, numbers, durations, weekdays (`weekdayName`) and country names (`zoneOptions`, via `Intl.DisplayNames`) are formatted by `Intl` with the page locale.
+- **No translated lists**: dates, times, numbers, durations, and weekdays (`weekdayName`) are formatted by `Intl` with the page locale.
 - **Routes**: pages live in `src/pages/[...locale]/` and `localePaths()` generates one copy per locale. The default locale has no prefix (`/`, `/today`); others get one (`/es/`, `/es/today`). Build internal links with `localeUrl(locale, path)`.
 - **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated. Only MAL's main genres are kept (`MAIN_GENRES` in `lib/mal.ts`); themes, demographics and explicit tags are dropped.
 

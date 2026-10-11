@@ -110,7 +110,7 @@ const tabs = [
 
   <script>
     import type { Anime } from '../../lib/mal';
-    import { currentTz, localSlot } from '../../lib/time';
+    import { localSlot, localTz } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
@@ -119,7 +119,6 @@ const tabs = [
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
     const toggle = document.getElementById('titles-en') as HTMLInputElement;
-    const tzSelect = document.getElementById('tz') as HTMLSelectElement;
 
     // --- filters ---
     const form = document.getElementById('filters') as HTMLFormElement;
@@ -192,16 +191,15 @@ const tabs = [
       apply();
     });
 
-    // air times and the day filter follow the selected time zone
+    // air times and the day filter follow the user's time zone
     function renderTz() {
       for (const c of cards) {
-        const slot = localSlot(anime(c), currentTz(), locale);
+        const slot = localSlot(anime(c), localTz(), locale);
         c.dataset.day = slot?.day ?? '';
         c.querySelector('.when')!.textContent = slot?.short ?? '?';
       }
       apply();
     }
-    tzSelect.addEventListener('change', renderTz);
     toggle.addEventListener('change', apply); // A–Z order depends on the title language
     form.addEventListener('input', apply);
     renderTz();

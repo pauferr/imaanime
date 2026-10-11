@@ -5,41 +5,6 @@ type Broadcast = { day: string | null; time: string | null };
 export const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']; // MAL's day keys
 const HOUR = 3600e3;
 
-// The time zone is what matters for air times; the country is just the flag label.
-// Country names come from Intl.DisplayNames, so they follow the page locale.
-// ponytail: short list; any other browser time zone is added automatically as "🌐 <city>"
-export const ZONES: [country: string, tz: string][] = [
-  ['US', 'America/New_York'], ['US', 'America/Chicago'], ['US', 'America/Denver'], ['US', 'America/Los_Angeles'],
-  ['CA', 'America/Toronto'], ['CA', 'America/Vancouver'], ['MX', 'America/Mexico_City'], ['BR', 'America/Sao_Paulo'],
-  ['AR', 'America/Argentina/Buenos_Aires'], ['CL', 'America/Santiago'], ['CO', 'America/Bogota'], ['PE', 'America/Lima'],
-  ['GB', 'Europe/London'], ['IE', 'Europe/Dublin'], ['PT', 'Europe/Lisbon'], ['ES', 'Europe/Madrid'],
-  ['FR', 'Europe/Paris'], ['DE', 'Europe/Berlin'], ['IT', 'Europe/Rome'], ['NL', 'Europe/Amsterdam'],
-  ['PL', 'Europe/Warsaw'], ['IN', 'Asia/Kolkata'], ['ID', 'Asia/Jakarta'], ['PH', 'Asia/Manila'],
-  ['SG', 'Asia/Singapore'], ['KR', 'Asia/Seoul'], ['JP', 'Asia/Tokyo'], ['AU', 'Australia/Sydney'],
-  ['NZ', 'Pacific/Auckland'],
-];
-
-export const city = (tz: string) => tz.split('/').pop()!.replaceAll('_', ' ');
-
-// Selector options: "🇺🇸 United States (New York)" when a country has several zones, else "🇪🇸 Spain"
-export function zoneOptions(locale: string) {
-  const names = new Intl.DisplayNames([locale], { type: 'region' });
-  return ZONES.map(([cc, tz]) => {
-    const multi = ZONES.filter(([c]) => c === cc).length > 1;
-    return { tz, label: `${flag(cc)} ${names.of(cc)}${multi ? ` (${city(tz)})` : ''}` };
-  });
-}
-export const flag = (cc: string) => String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0)));
-
-// Time zone saved by the user or, if none was chosen, the browser's
-export function getTz(): string {
-  try {
-    const saved = localStorage.getItem('tz');
-    if (saved) return saved;
-  } catch {}
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
 // Air instant in week `offset` relative to the current week in Japan.
 // "25:30" (Japanese late-night notation) correctly overflows into the next day.
 export function airInstant(b: Broadcast, offset = 0): Date | null {
@@ -77,8 +42,8 @@ export function airingToday(b: Broadcast, tz: string, now = new Date()) {
   return null;
 }
 
-// In the browser: the time zone picked in the header selector (Layout.astro)
-export const currentTz = () => (document.getElementById('tz') as HTMLSelectElement | null)?.value || getTz();
+// In the browser: the user's time zone, straight from the system settings
+export const localTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 // Localized weekday name for a MAL day key ("monday" → "Monday" in en, "lunes" in es)
 export const weekdayName = (day: string, locale: string, style: 'long' | 'short' = 'long') =>

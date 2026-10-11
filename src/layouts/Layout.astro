@@ -1,5 +1,4 @@
 ---
-import { zoneOptions } from '../lib/time';
 import { localeUrl, ui, type Locale } from '../i18n';
 
 interface Props {
@@ -33,9 +32,6 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         <a href={home} aria-current={current(home)}>{t.nav.season}</a>
         <a href={today} aria-current={current(today)}>{t.nav.today}</a>
       </nav>
-      <select id="tz" aria-label={t.tz.label} title={t.tz.title}>
-        {zoneOptions(locale).map(({ tz, label }) => <option value={tz}>{label}</option>)}
-      </select>
       <label class="switch">
         <span>JP</span>
         <input type="checkbox" id="titles-en" />
@@ -43,20 +39,8 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       </label>
     </header>
 
-    <!-- placed before the content: page scripts read #tz and #titles-en already initialized -->
+    <!-- placed before the content: page scripts read #titles-en already initialized -->
     <script>
-      import { city, getTz } from '../lib/time';
-
-      const tz = document.getElementById('tz') as HTMLSelectElement;
-      const initial = getTz();
-      if (![...tz.options].some((o) => o.value === initial)) {
-        tz.add(new Option(`🌐 ${city(initial)}`, initial), 0);
-      }
-      tz.value = initial;
-      tz.addEventListener('change', () => {
-        try { localStorage.setItem('tz', tz.value); } catch {}
-      });
-
       // title language (JP/EN) is a separate preference from the UI locale
       const titles = document.getElementById('titles-en') as HTMLInputElement;
       try { titles.checked = localStorage.getItem('titles') === 'en'; } catch {}
@@ -120,16 +104,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       nav a:hover { color: var(--text); }
       nav a[aria-current='page'] { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
 
-      #tz {
-        font: inherit;
-        padding: 0.4rem 0.6rem;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: var(--surface);
-        color: var(--text);
-        cursor: pointer;
-      }
-      :is(#tz, nav a):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+      nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
       .switch { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
       .switch input {
         appearance: none;

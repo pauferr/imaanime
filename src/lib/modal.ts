@@ -1,6 +1,6 @@
 // Fills and opens the <dialog> from src/components/Modal.astro
 import type { Anime } from './mal';
-import { currentTz, formatDate, jstSlot, localSlot } from './time';
+import { formatDate, jstSlot, localSlot, localTz } from './time';
 import { pageLocale, ui } from '../i18n';
 
 // `cover`: the clicked card's image, which morphs into the modal image (View Transitions API)
@@ -23,7 +23,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('episodes', a.episodes ?? '?');
   set('studios', a.studios.join(', '));
   set('aired', a.from ? formatDate(a.from, locale) : '?');
-  const slot = localSlot(a, currentTz(), locale);
+  const slot = localSlot(a, localTz(), locale);
   const original = jstSlot(a, locale) ?? ui[locale].unknown;
   set('broadcast', slot ? `${slot.long} ${t.yourTime} · ${original}` : original);
   field<HTMLAnchorElement>('url').href = a.url;
