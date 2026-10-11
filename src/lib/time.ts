@@ -8,18 +8,18 @@ const HOUR = 3600e3;
 // The time zone is what matters for air times; the country is just the flag label.
 // ponytail: short list; any other browser time zone is added automatically as "🌐 <city>"
 export const ZONES: [string, string, string][] = [
-  ['ES', 'España', 'Europe/Madrid'], ['ES', 'Canarias', 'Atlantic/Canary'], ['PT', 'Portugal', 'Europe/Lisbon'],
-  ['GB', 'Reino Unido', 'Europe/London'], ['FR', 'Francia', 'Europe/Paris'], ['DE', 'Alemania', 'Europe/Berlin'],
-  ['IT', 'Italia', 'Europe/Rome'], ['MX', 'México', 'America/Mexico_City'], ['GT', 'Guatemala', 'America/Guatemala'],
-  ['CR', 'Costa Rica', 'America/Costa_Rica'], ['CU', 'Cuba', 'America/Havana'], ['DO', 'Rep. Dominicana', 'America/Santo_Domingo'],
-  ['PR', 'Puerto Rico', 'America/Puerto_Rico'], ['CO', 'Colombia', 'America/Bogota'], ['VE', 'Venezuela', 'America/Caracas'],
-  ['EC', 'Ecuador', 'America/Guayaquil'], ['PE', 'Perú', 'America/Lima'], ['BO', 'Bolivia', 'America/La_Paz'],
-  ['CL', 'Chile', 'America/Santiago'], ['AR', 'Argentina', 'America/Argentina/Buenos_Aires'],
-  ['UY', 'Uruguay', 'America/Montevideo'], ['PY', 'Paraguay', 'America/Asuncion'], ['BR', 'Brasil', 'America/Sao_Paulo'],
-  ['US', 'EE. UU. (Este)', 'America/New_York'], ['US', 'EE. UU. (Centro)', 'America/Chicago'],
-  ['US', 'EE. UU. (Montaña)', 'America/Denver'], ['US', 'EE. UU. (Pacífico)', 'America/Los_Angeles'],
-  ['JP', 'Japón', 'Asia/Tokyo'], ['PH', 'Filipinas', 'Asia/Manila'], ['AU', 'Australia (Sídney)', 'Australia/Sydney'],
-];
+  ['US', 'United States (Eastern)', 'America/New_York'], ['US', 'United States (Central)', 'America/Chicago'],
+  ['US', 'United States (Mountain)', 'America/Denver'], ['US', 'United States (Pacific)', 'America/Los_Angeles'],
+  ['CA', 'Canada (Toronto)', 'America/Toronto'], ['CA', 'Canada (Vancouver)', 'America/Vancouver'],
+  ['MX', 'Mexico', 'America/Mexico_City'], ['BR', 'Brazil', 'America/Sao_Paulo'], ['AR', 'Argentina', 'America/Argentina/Buenos_Aires'],
+  ['CL', 'Chile', 'America/Santiago'], ['CO', 'Colombia', 'America/Bogota'], ['PE', 'Peru', 'America/Lima'],
+  ['GB', 'United Kingdom', 'Europe/London'], ['IE', 'Ireland', 'Europe/Dublin'], ['PT', 'Portugal', 'Europe/Lisbon'],
+  ['ES', 'Spain', 'Europe/Madrid'], ['FR', 'France', 'Europe/Paris'], ['DE', 'Germany', 'Europe/Berlin'],
+  ['IT', 'Italy', 'Europe/Rome'], ['NL', 'Netherlands', 'Europe/Amsterdam'], ['PL', 'Poland', 'Europe/Warsaw'],
+  ['IN', 'India', 'Asia/Kolkata'], ['ID', 'Indonesia (Jakarta)', 'Asia/Jakarta'], ['PH', 'Philippines', 'Asia/Manila'],
+  ['SG', 'Singapore', 'Asia/Singapore'], ['KR', 'South Korea', 'Asia/Seoul'], ['JP', 'Japan', 'Asia/Tokyo'],
+  ['AU', 'Australia (Sydney)', 'Australia/Sydney'], ['NZ', 'New Zealand', 'Pacific/Auckland'],
+]
 export const flag = (cc: string) => String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 
 // Time zone saved by the user or, if none was chosen, the browser's
@@ -45,7 +45,7 @@ export function airInstant(b: Broadcast, offset = 0): Date | null {
 export const dateIn = (d: Date, tz: string) => d.toLocaleDateString('en-CA', { timeZone: tz });
 
 export const timeIn = (d: Date, tz: string, weekday?: 'short' | 'long') =>
-  d.toLocaleString('es', { weekday, hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: tz });
+  d.toLocaleString('en', { weekday, hour: 'numeric', minute: '2-digit', timeZone: tz });
 
 // Local weekday and time of the weekly broadcast (uses the current week so the current DST offset applies)
 export function localSlot(b: Broadcast, tz: string) {

@@ -38,13 +38,13 @@ const lean = (a: any): Anime => ({
   img: a.images.webp.large_image_url,
   title: a.title,
   titleEn: a.title_english,
-  synopsis: (a.synopsis ?? 'Sin sinopsis.').replace(/\s*\[Written by MAL Rewrite\]\s*$/, ''),
+  synopsis: (a.synopsis ?? 'No synopsis yet.').replace(/\s*\[Written by MAL Rewrite\]\s*$/, ''),
   score: a.score,
   votes: a.scored_by,
   episodes: a.episodes,
   day: a.broadcast.day,
   time: a.broadcast.time,
-  broadcast: a.broadcast.string ?? 'Desconocido',
+  broadcast: a.broadcast.string ?? 'Unknown',
   from: a.aired.from,
   aired: a.aired.string,
   studios: a.studios.map((s: any) => s.name),
@@ -76,7 +76,7 @@ export function seasonNow() {
 }
 
 export const seasonLabel = (s: { season: string; year: number | string }) =>
-  s.season ? `${s.season[0].toUpperCase()}${s.season.slice(1)} ${s.year}` : 'Season actual';
+  s.season ? `${s.season[0].toUpperCase()}${s.season.slice(1)} ${s.year}` : 'Current season';
 
 // For <script type="application/json">: escaping "<" stops a "</script>" in the data from closing the tag
 export const toJsonScript = (data: unknown) => JSON.stringify(data).replaceAll('<', '\\u003c');

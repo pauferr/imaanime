@@ -15,13 +15,13 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('title', en ? a.titleEn! : a.title);
   set('alt', en ? a.title : a.titleEn ?? '');
   set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
-  set('votes', a.votes ? `(${a.votes.toLocaleString('es')} votos en MAL)` : '');
+  set('votes', a.votes ? `(${a.votes.toLocaleString('en')} votes on MAL)` : '');
   set('synopsis', a.synopsis);
   set('episodes', a.episodes ?? '?');
   set('studios', a.studios.join(', '));
   set('aired', a.aired);
   const slot = localSlot(a, currentTz());
-  set('broadcast', slot ? `${slot.long} (tu hora) · ${a.broadcast}` : a.broadcast);
+  set('broadcast', slot ? `${slot.long} (your time) · ${a.broadcast}` : a.broadcast);
   field<HTMLAnchorElement>('url').href = a.url;
   field('genres').replaceChildren(...a.genres.map((g) => Object.assign(document.createElement('li'), { textContent: g })));
 

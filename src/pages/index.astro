@@ -9,35 +9,35 @@ const label = seasonLabel(season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
 const genres = [...new Set(animes.flatMap((a) => a.genres))].sort();
 const DAYS: Record<string, string> = {
-  Mondays: 'Lunes', Tuesdays: 'Martes', Wednesdays: 'Miércoles', Thursdays: 'Jueves',
-  Fridays: 'Viernes', Saturdays: 'Sábado', Sundays: 'Domingo',
+  Mondays: 'Monday', Tuesdays: 'Tuesday', Wednesdays: 'Wednesday', Thursdays: 'Thursday',
+  Fridays: 'Friday', Saturdays: 'Saturday', Sundays: 'Sunday',
 };
 ---
 
-<Layout title={`Ima Anime · ${label}`} description={`Animes en emisión: ${label}`} subtitle={`En emisión · ${label}`}>
+<Layout title={`Ima Anime · ${label}`} description={`Anime airing now: ${label}`} subtitle={`Airing now · ${label}`}>
   <form class="filters" id="filters" onsubmit="return false">
     <div class="row">
-      <input type="search" name="q" placeholder="Buscar por nombre…  ( / )" aria-label="Buscar por nombre" autocomplete="off" />
-      <select name="day" aria-label="Día de emisión">
-        <option value="">Cualquier día</option>
+      <input type="search" name="q" placeholder="Search by title…  ( / )" aria-label="Search by title" autocomplete="off" />
+      <select name="day" aria-label="Air day">
+        <option value="">Any day</option>
         {Object.entries(DAYS).map(([v, l]) => <option value={v}>{l}</option>)}
       </select>
-      <select name="sort" aria-label="Ordenar">
-        <option value="new">Más recientes</option>
-        <option value="score">Mejor nota</option>
-        <option value="votes">Más populares</option>
-        <option value="name">Nombre A–Z</option>
+      <select name="sort" aria-label="Sort by">
+        <option value="new">Newest</option>
+        <option value="score">Top rated</option>
+        <option value="votes">Most popular</option>
+        <option value="name">Title A–Z</option>
       </select>
     </div>
     <fieldset class="chips">
-      <legend>Géneros</legend>
+      <legend>Genres</legend>
       {genres.map((g) => (
         <label><input type="checkbox" name="genre" value={g} /><span>{g}</span></label>
       ))}
     </fieldset>
     <p class="status">
       <span id="count"></span>
-      <button type="reset" id="clear">Limpiar filtros</button>
+      <button type="reset" id="clear">Clear filters</button>
     </p>
   </form>
 
@@ -59,7 +59,7 @@ const DAYS: Record<string, string> = {
         </div>
       </button>
     ))}
-    <p class="empty" hidden>Ningún anime coincide con los filtros.</p>
+    <p class="empty" hidden>No anime matches these filters.</p>
   </main>
 
   <Modal />
@@ -107,10 +107,10 @@ const DAYS: Record<string, string> = {
         new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO strings sort correctly as text; missing dates go last
         score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
         votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
-        name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), 'es'),
+        name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), 'en'),
       }[sort];
       grid.prepend(...cards.sort(by));
-      document.getElementById('count')!.textContent = `${n} de ${cards.length} animes`;
+      document.getElementById('count')!.textContent = `${n} of ${cards.length} anime`;
       grid.querySelector<HTMLElement>('.empty')!.hidden = n > 0;
       document.getElementById('clear')!.hidden = !q && !day && !picked.length;
       // state lives in the URL: shareable and survives reloads

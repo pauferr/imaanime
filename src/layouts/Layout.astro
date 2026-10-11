@@ -10,7 +10,7 @@ const { title, description, subtitle } = Astro.props;
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---
 
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,9 +25,9 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
       </div>
       <nav>
         <a href="/" aria-current={path === '/' ? 'page' : undefined}>Season</a>
-        <a href="/today" aria-current={path === '/today' ? 'page' : undefined}>Hoy</a>
+        <a href="/today" aria-current={path === '/today' ? 'page' : undefined}>Today</a>
       </nav>
-      <select id="tz" aria-label="País / zona horaria para los horarios" title="Cambiar país / zona horaria">
+      <select id="tz" aria-label="Country / time zone for air times" title="Change country / time zone">
         {ZONES.map(([cc, name, tz]) => <option value={tz}>{flag(cc)} {name}</option>)}
       </select>
       <label class="switch">
@@ -75,7 +75,7 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
         --shadow-hover: 0 12px 24px light-dark(rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.6));
       }
 
-      /* cross-page transitions (Season ↔ Hoy): native, no JS; browsers without support just navigate */
+      /* cross-page transitions (Season ↔ Today): native, no JS; browsers without support just navigate */
       @view-transition { navigation: auto; }
       header { view-transition-name: site-header; }
 

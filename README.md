@@ -11,9 +11,7 @@
 - **Original or English titles**: switch between Japanese and English titles with a single click.
 - **See the full details**: click any anime to see the full synopsis, studio, episodes, genres, and air time.
 - **Air times in your time zone**: the site detects your country and shows every broadcast in your local time. Traveling, or prefer another country? Change it from the flag at the top.
-- **What's on today**: the **Hoy** (Today) section lists today's episodes by air time, with a countdown to each new episode. Episodes that have already aired move to the end, marked in green.
-
-The site is currently in Spanish.
+- **What's on today**: the **Today** section lists today's episodes by air time, with a countdown to each new episode. Episodes that have already aired move to the end, marked in green.
 
 ## Where the data comes from
 

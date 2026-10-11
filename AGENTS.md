@@ -37,13 +37,13 @@ src/
 - **When Jikan fails**: there is no fallback data. In `dev` the page shows the error (retried on the next reload); `build` fails and Vercel keeps the previous deployment.
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
 - **Air times**: Jikan gives weekday and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
-- **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Emitido", midnight rollover).
+- **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
 - **Preferences**: time zone (`tz`) and title language (`lang`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
 - **JP/EN switch**: pure CSS (`body:has(#lang-en:checked)`), no JS to show or hide titles.
 
 ## Conventions
 
-- **English** for code comments, commits, PRs, issues, docs, and the repository description: the project will be public. **The UI text is in Spanish.**
+- **English everywhere**: UI text, code comments, commits, PRs, issues, docs, and the repository description. The site is English-only for now (no i18n).
 - Simplest thing that works: native platform features before dependencies, no speculative abstractions. Deliberate shortcuts carry a `ponytail:` comment explaining their limits.
 - External data is inserted with `textContent`, never `innerHTML`.
 - Basic accessibility: native interactive elements (`<button>`, `<dialog>`, `<select>`), `:focus-visible`, and `prefers-reduced-motion`.

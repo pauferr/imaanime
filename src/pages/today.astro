@@ -9,8 +9,8 @@ const animes = season.data.filter((a) => a.day && a.time);
 const label = seasonLabel(season);
 ---
 
-<Layout title="Hoy · Ima Anime" description={`Animes que se emiten hoy · ${label}`} subtitle={`Se emiten hoy · ${label}`}>
-  <h2 class="today-title" id="today-title">Hoy</h2>
+<Layout title="Today · Ima Anime" description={`Anime airing today · ${label}`} subtitle={`Airing today · ${label}`}>
+  <h2 class="today-title" id="today-title">Today</h2>
 
   <main class="today">
     {animes.map((a, i) => (
@@ -32,7 +32,7 @@ const label = seasonLabel(season);
         </div>
       </button>
     ))}
-    <p class="empty" hidden>Hoy no se emite ningún anime de esta season.</p>
+    <p class="empty" hidden>No anime from this season airs today.</p>
   </main>
 
   <Modal />
@@ -50,7 +50,7 @@ const label = seasonLabel(season);
     const empty = list.querySelector<HTMLElement>('.empty')!;
     const title = document.getElementById('today-title')!;
 
-    const duration = new Intl.DurationFormat('es', { style: 'narrow' }); // "2h 5min 12s"
+    const duration = new Intl.DurationFormat('en', { style: 'narrow' }); // "2h 5m 12s"
     const countdown = (ms: number) => {
       const s = Math.floor(ms / 1000);
       return duration.format({ hours: Math.floor(s / 3600), minutes: Math.floor((s % 3600) / 60), seconds: s % 60 });
@@ -61,7 +61,7 @@ const label = seasonLabel(season);
     function tick() {
       const tz = currentTz();
       const now = new Date();
-      title.textContent = `Hoy, ${now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })}`;
+      title.textContent = `Today, ${now.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })}`;
 
       const shown: { card: HTMLElement; at: number; aired: boolean }[] = [];
       for (const card of cards) {
@@ -75,7 +75,7 @@ const label = seasonLabel(season);
         const left = at!.getTime() - now.getTime();
         const aired = left <= 0;
         card.classList.toggle('aired', aired);
-        card.querySelector('.countdown')!.textContent = aired ? '✓ Emitido' : `⏱ ${countdown(left)}`;
+        card.querySelector('.countdown')!.textContent = aired ? '✓ Aired' : `⏱ ${countdown(left)}`;
         card.querySelector('.time')!.textContent = `🕒 ${timeIn(at!, tz)}`;
         shown.push({ card, at: at!.getTime(), aired });
       }
