@@ -62,7 +62,7 @@ The site ships in English only, but is structured for more locales:
 - **All UI strings** live in `src/i18n.ts` (`ui.en`). Pages and components read them through `t = ui[locale]`; client scripts get the locale from `<html lang>` via `pageLocale()`.
 - **No translated lists**: dates, times, numbers, durations, weekdays (`weekdayName`) and country names (`zoneOptions`, via `Intl.DisplayNames`) are formatted by `Intl` with the page locale.
 - **Routes**: pages live in `src/pages/[...locale]/` and `localePaths()` generates one copy per locale. The default locale has no prefix (`/`, `/today`); others get one (`/es/`, `/es/today`). Build internal links with `localeUrl(locale, path)`.
-- **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated.
+- **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated. Only MAL's main genres are kept (`MAIN_GENRES` in `lib/mal.ts`); themes, demographics and explicit tags are dropped.
 
 **To add a language**: add a dictionary to `ui` in `src/i18n.ts` (typed as `Dict`, so TypeScript flags any missing key). Nothing else is required. A language picker in the header and `hreflang` links are not built yet; add them together with the second language.
 

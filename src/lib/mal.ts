@@ -8,6 +8,10 @@ const FIELDS = [
   'start_date', 'broadcast', 'studios', 'genres', 'status', 'start_season', 'media_type',
 ].join(',');
 const SEASONS = ['winter', 'spring', 'summer', 'fall'];
+// MAL's main genres (Action, Comedy, Drama, Fantasy, Romance, Sci-Fi, Slice of Life…). Its "genres" field also mixes in
+// ~50 themes (Isekai, School…), demographics (Shounen, Kids…) and explicit tags; those are dropped. "Award Winning" too.
+// IDs are MAL genre IDs (see /anime/genre/<id> on myanimelist.net)
+const MAIN_GENRES = new Set([1, 2, 4, 5, 7, 8, 10, 14, 22, 24, 26, 28, 30, 36, 37, 41, 47]);
 
 // Only what the site uses: it is embedded in every page's HTML
 export type Anime = {
@@ -56,7 +60,7 @@ const lean = (a: any, isNew: boolean): Anime => ({
   isNew,
   from: a.start_date ?? null,
   studios: (a.studios ?? []).map((s: any) => s.name),
-  genres: (a.genres ?? []).map((g: any) => g.name),
+  genres: (a.genres ?? []).filter((g: any) => MAIN_GENRES.has(g.id)).map((g: any) => g.name),
 });
 
 async function load() {
