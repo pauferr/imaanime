@@ -4,7 +4,7 @@ import Modal from '../components/Modal.astro';
 import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
 
 const season = await seasonNow();
-// Qué se emite "hoy" depende de la zona horaria del usuario: se renderizan todos y el cliente filtra
+// What airs "today" depends on the user's time zone: render everything and let the client filter
 const animes = season.data.filter((a) => a.day && a.time);
 const label = seasonLabel(season);
 ---
@@ -57,7 +57,7 @@ const label = seasonLabel(season);
     };
 
     let order = '';
-    // ponytail: recalcula todo cada segundo; son pocas cards. Así también cambia solo a medianoche.
+    // ponytail: recomputes everything every second; there are few cards. This also rolls over at midnight for free.
     function tick() {
       const tz = currentTz();
       const now = new Date();
@@ -67,7 +67,7 @@ const label = seasonLabel(season);
       for (const card of cards) {
         const a = animes[Number(card.dataset.i)];
         const at = airingToday(a, tz, now);
-        // fuera si no se emite hoy o si aún no se ha estrenado (from es la fecha de estreno en Japón)
+        // hide if it does not air today or has not premiered yet (from is the premiere date in Japan)
         const jstDate = at && new Date(at.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
         const ok = !!at && (!a.from || jstDate! >= a.from.slice(0, 10));
         card.hidden = !ok;
@@ -80,11 +80,11 @@ const label = seasonLabel(season);
         shown.push({ card, at: at!.getTime(), aired });
       }
 
-      // por hora de emisión; los ya emitidos al final
+      // by air time; already aired ones last
       shown.sort((x, y) => +x.aired - +y.aired || x.at - y.at);
       const key = shown.map((s) => s.card.dataset.i).join();
       if (key !== order) {
-        // solo se reordena si cambia: mover nodos cada segundo cortaría el hover
+        // only reorder on change: moving nodes every second would break hover
         list.prepend(...shown.map((s) => s.card));
         order = key;
       }

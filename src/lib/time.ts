@@ -1,12 +1,12 @@
-// Horarios: Jikan da día + hora de emisión en JST (UTC+9, Japón no tiene horario de verano).
+// Air times: Jikan gives weekday + time in JST (UTC+9, Japan has no daylight saving time).
 
 type Broadcast = { day: string | null; time: string | null };
 
 export const WEEK = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 const HOUR = 3600e3;
 
-// Lo que importa para los horarios es la zona horaria; el país es solo la etiqueta con bandera.
-// ponytail: lista corta; si el navegador tiene otra zona, se añade sola como "🌐 <ciudad>"
+// The time zone is what matters for air times; the country is just the flag label.
+// ponytail: short list; any other browser time zone is added automatically as "🌐 <city>"
 export const ZONES: [string, string, string][] = [
   ['ES', 'España', 'Europe/Madrid'], ['ES', 'Canarias', 'Atlantic/Canary'], ['PT', 'Portugal', 'Europe/Lisbon'],
   ['GB', 'Reino Unido', 'Europe/London'], ['FR', 'Francia', 'Europe/Paris'], ['DE', 'Alemania', 'Europe/Berlin'],
@@ -22,7 +22,7 @@ export const ZONES: [string, string, string][] = [
 ];
 export const flag = (cc: string) => String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 
-// Zona guardada por el usuario o, si no eligió ninguna, la del navegador
+// Time zone saved by the user or, if none was chosen, the browser's
 export function getTz(): string {
   try {
     const saved = localStorage.getItem('tz');
@@ -31,8 +31,8 @@ export function getTz(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-// Instante de emisión en la semana `offset` respecto a la semana actual de Japón.
-// "25:30" (madrugada japonesa) se desborda bien al día siguiente.
+// Air instant in week `offset` relative to the current week in Japan.
+// "25:30" (Japanese late-night notation) correctly overflows into the next day.
 export function airInstant(b: Broadcast, offset = 0): Date | null {
   if (!b.day || !WEEK.includes(b.day) || !b.time) return null;
   const [h, m] = b.time.split(':').map(Number);
@@ -41,13 +41,13 @@ export function airInstant(b: Broadcast, offset = 0): Date | null {
   return new Date(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate() + diff, h - 9, m));
 }
 
-// Fecha YYYY-MM-DD en una zona horaria
+// YYYY-MM-DD date in a time zone
 export const dateIn = (d: Date, tz: string) => d.toLocaleDateString('en-CA', { timeZone: tz });
 
 export const timeIn = (d: Date, tz: string, weekday?: 'short' | 'long') =>
   d.toLocaleString('es', { weekday, hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: tz });
 
-// Día y hora local de la emisión semanal (la semana actual se usa para que el horario de verano sea el vigente)
+// Local weekday and time of the weekly broadcast (uses the current week so the current DST offset applies)
 export function localSlot(b: Broadcast, tz: string) {
   const d = airInstant(b);
   if (!d) return null;
@@ -58,7 +58,7 @@ export function localSlot(b: Broadcast, tz: string) {
   };
 }
 
-// La emisión que cae hoy (en la zona `tz`), si la hay
+// The broadcast that falls today (in time zone `tz`), if any
 export function airingToday(b: Broadcast, tz: string, now = new Date()) {
   const today = dateIn(now, tz);
   for (const offset of [-1, 0, 1]) {
@@ -68,5 +68,5 @@ export function airingToday(b: Broadcast, tz: string, now = new Date()) {
   return null;
 }
 
-// En el navegador: la zona elegida en el selector de la cabecera (Layout.astro)
+// In the browser: the time zone picked in the header selector (Layout.astro)
 export const currentTz = () => (document.getElementById('tz') as HTMLSelectElement | null)?.value || getTz();

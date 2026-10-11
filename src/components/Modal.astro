@@ -1,5 +1,5 @@
-<!-- Se abre con openModal() de src/lib/modal.ts -->
-<!-- closedby="any": cierra al pulsar fuera (nativo; Safari aún no, ahí cierran Esc y ✕) -->
+<!-- Opened with openModal() from src/lib/modal.ts -->
+<!-- closedby="any": native light dismiss on outside click (not in Safari yet; Esc and ✕ still work there) -->
 <dialog id="modal" closedby="any">
   <form method="dialog"><button class="close" aria-label="Cerrar">✕</button></form>
   <img data-f="img" alt="" />
@@ -21,7 +21,7 @@
   </div>
 </dialog>
 
-<!-- global: openModal() crea <li> por JS, que no llevarían el atributo de los estilos con scope -->
+<!-- global: openModal() creates <li> elements in JS, which would not get the scoped-style attribute -->
 <style is:global>
   #modal {
     width: min(860px, calc(100vw - 32px));
@@ -35,7 +35,7 @@
   }
   #modal[open] { display: grid; grid-template-columns: 300px 1fr; animation: pop 0.25s ease; }
   #modal::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(4px); }
-  #modal > form { display: contents; } /* el ✕ va posicionado; el form no ocupa celda del grid */
+  #modal > form { display: contents; } /* ✕ is absolutely positioned; the form must not take a grid cell */
   #modal > img { width: 100%; height: 100%; object-fit: cover; }
   #modal .info { padding: 1.5rem; overflow-y: auto; }
   #modal h2 { margin: 0; font-size: 1.5rem; }

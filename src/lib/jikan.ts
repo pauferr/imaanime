@@ -1,10 +1,10 @@
-// Jikan v4 (API no oficial de MyAnimeList): https://docs.api.jikan.moe/
+// Jikan v4 (unofficial MyAnimeList API): https://docs.api.jikan.moe/
 
 const API = 'https://api.jikan.moe/v4/seasons/now';
-const MAX_PAGES = 10; // 25 por página; una season ronda 3–5 páginas
+const MAX_PAGES = 10; // 25 per page; a season is usually 3–5 pages
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Solo lo que usa la web: va incrustado en el HTML de cada página
+// Only what the site uses: it is embedded in every page's HTML
 export type Anime = {
   url: string;
   img: string;
@@ -14,11 +14,11 @@ export type Anime = {
   score: number | null;
   votes: number | null;
   episodes: number | null;
-  day: string | null; // "Saturdays", en hora de Japón
-  time: string | null; // "23:30", en hora de Japón
-  broadcast: string; // texto original, p. ej. "Saturdays at 23:30 (JST)"
-  from: string | null; // fecha de estreno ISO
-  aired: string; // texto original, p. ej. "Oct 4, 2026 to ?"
+  day: string | null; // "Saturdays", Japan time
+  time: string | null; // "23:30", Japan time
+  broadcast: string; // original text, e.g. "Saturdays at 23:30 (JST)"
+  from: string | null; // ISO premiere date
+  aired: string; // original text, e.g. "Oct 4, 2026 to ?"
   studios: string[];
   genres: string[];
 };
@@ -29,7 +29,7 @@ async function get(url: string, tries = 3): Promise<any> {
     await sleep(1500);
     return get(url, tries - 1);
   }
-  if (!res.ok) throw new Error(`Jikan respondió ${res.status} en ${url}`);
+  if (!res.ok) throw new Error(`Jikan returned ${res.status} for ${url}`);
   return res.json();
 }
 
@@ -52,12 +52,12 @@ const lean = (a: any): Anime => ({
 });
 
 async function load() {
-  const byId = new Map<number, any>(); // Jikan a veces repite entradas entre páginas
+  const byId = new Map<number, any>(); // Jikan sometimes repeats entries across pages
   for (let page = 1; page <= MAX_PAGES; page++) {
     const json = await get(`${API}?sfw=true&page=${page}`);
     for (const a of json.data) byId.set(a.mal_id, a);
     if (!json.pagination.has_next_page) break;
-    await sleep(400); // límite de Jikan: 3 peticiones/s
+    await sleep(400); // Jikan rate limit: 3 requests/s
   }
   const all = [...byId.values()];
   const first = all.find((a) => a.season);
@@ -66,10 +66,10 @@ async function load() {
 
 let cache: ReturnType<typeof load> | undefined;
 
-// ponytail: caché en memoria del proceso; en `astro build` se descarga una vez para las dos páginas, en dev hasta reiniciar
+// ponytail: in-process memory cache; `astro build` fetches once for both pages, dev keeps it until restart
 export function seasonNow() {
   cache ??= load().catch((err) => {
-    cache = undefined; // reintentar en la siguiente petición
+    cache = undefined; // retry on the next request
     throw err;
   });
   return cache;
@@ -78,5 +78,5 @@ export function seasonNow() {
 export const seasonLabel = (s: { season: string; year: number | string }) =>
   s.season ? `${s.season[0].toUpperCase()}${s.season.slice(1)} ${s.year}` : 'Season actual';
 
-// Para <script type="application/json">: escapar "<" evita que un "</script>" en los datos cierre la etiqueta
+// For <script type="application/json">: escaping "<" stops a "</script>" in the data from closing the tag
 export const toJsonScript = (data: unknown) => JSON.stringify(data).replaceAll('<', '\\u003c');

@@ -1,10 +1,10 @@
-// Rellena y abre el <dialog> de src/components/Modal.astro
+// Fills and opens the <dialog> from src/components/Modal.astro
 import type { Anime } from './jikan';
 import { currentTz, localSlot } from './time';
 
 export function openModal(a: Anime) {
   const modal = document.getElementById('modal') as HTMLDialogElement;
-  // textContent, no innerHTML: los datos vienen de una API externa
+  // textContent, not innerHTML: the data comes from an external API
   const field = <T extends HTMLElement>(f: string) => modal.querySelector<T>(`[data-f="${f}"]`)!;
   const set = (f: string, v: string | number) => (field(f).textContent = String(v));
   const en = (document.getElementById('lang-en') as HTMLInputElement).checked && a.titleEn;

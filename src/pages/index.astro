@@ -75,12 +75,12 @@ const DAYS: Record<string, string> = {
     const toggle = document.getElementById('lang-en') as HTMLInputElement;
     const tzSelect = document.getElementById('tz') as HTMLSelectElement;
 
-    // --- filtros ---
+    // --- filters ---
     const form = document.getElementById('filters') as HTMLFormElement;
     const grid = document.querySelector('.grid')!;
     const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
     const anime = (c: HTMLElement) => animes[Number(c.dataset.i)];
-    // minúsculas y sin acentos, para buscar "kimetsu" y encontrar "Kimétsu"
+    // lowercase without diacritics, so "kimetsu" matches "Kimétsu"
     const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const names = animes.map((a) => norm(`${a.title} ${a.titleEn ?? ''}`));
     const shownName = (c: HTMLElement) => {
@@ -97,14 +97,14 @@ const DAYS: Record<string, string> = {
       let n = 0;
       for (const c of cards) {
         const a = anime(c);
-        // ponytail: géneros con lógica Y (debe tener todos los marcados)
+        // ponytail: genres use AND logic (must have every selected one)
         const ok = (!q || names[Number(c.dataset.i)].includes(q)) && (!day || c.dataset.day === day) && picked.every((p) => a.genres.includes(p));
         c.hidden = !ok;
         n += +ok;
       }
       type C = HTMLElement;
       const by = {
-        new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO: ordena bien como texto; sin fecha al final
+        new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO strings sort correctly as text; missing dates go last
         score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
         votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
         name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), 'es'),
@@ -113,19 +113,19 @@ const DAYS: Record<string, string> = {
       document.getElementById('count')!.textContent = `${n} de ${cards.length} animes`;
       grid.querySelector<HTMLElement>('.empty')!.hidden = n > 0;
       document.getElementById('clear')!.hidden = !q && !day && !picked.length;
-      // estado en la URL: compartible y sobrevive a recargar
+      // state lives in the URL: shareable and survives reloads
       const params = new URLSearchParams(
         [...f].filter(([k, v]) => v && !(k === 'sort' && v === 'new')) as [string, string][]
       );
       history.replaceState(null, '', params.size ? `?${params}` : location.pathname);
     }
 
-    // restaurar filtros desde la URL
+    // restore filters from the URL
     const params = new URLSearchParams(location.search);
     for (const el of form.querySelectorAll<HTMLInputElement>('[name]'))
       el.type === 'checkbox' ? (el.checked = params.getAll(el.name).includes(el.value)) : (el.value = params.get(el.name) ?? el.value);
 
-    // horarios y día del filtro en la zona horaria elegida
+    // air times and the day filter follow the selected time zone
     function renderTz() {
       for (const c of cards) {
         const slot = localSlot(anime(c), currentTz());
@@ -135,12 +135,12 @@ const DAYS: Record<string, string> = {
       apply();
     }
     tzSelect.addEventListener('change', renderTz);
-    toggle.addEventListener('change', apply); // el orden A–Z depende del idioma
+    toggle.addEventListener('change', apply); // A–Z order depends on the title language
     form.addEventListener('input', apply);
-    form.addEventListener('reset', () => setTimeout(apply)); // reset limpia después del evento
+    form.addEventListener('reset', () => setTimeout(apply)); // reset clears the fields after the event fires
     renderTz();
 
-    // "/" enfoca el buscador
+    // "/" focuses the search box
     const modal = document.getElementById('modal') as HTMLDialogElement;
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && !(e.target as HTMLElement).closest('input, select, textarea') && !modal.open) {
@@ -156,7 +156,7 @@ const DAYS: Record<string, string> = {
   </script>
 
   <style>
-    /* --- filtros --- */
+    /* --- filters --- */
     .filters {
       max-width: 1200px;
       margin: 0 auto;
@@ -192,7 +192,7 @@ const DAYS: Record<string, string> = {
     .status { display: flex; align-items: center; gap: 1rem; margin: 0.75rem 0 1rem; color: var(--muted); font-size: 0.9rem; }
     #clear { font: inherit; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
 
-    /* --- cards (horizontales: portada a la izquierda) --- */
+    /* --- cards (horizontal: cover on the left) --- */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));

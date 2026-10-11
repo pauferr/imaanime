@@ -1,55 +1,54 @@
 # AGENTS.md
 
-Guía técnica de Ima Anime para quien trabaje en el código (personas o agentes). La descripción pública está en `README.md`.
+Technical guide to Ima Anime for anyone working on the code, human or agent. The public description lives in `README.md`.
 
 ## Stack
 
-- [Astro](https://astro.build) 7, sitio **estático**. Sin frameworks de UI ni librerías de CSS: HTML, CSS nativo y TypeScript en `<script>` de Astro.
-- Datos de [Jikan v4](https://docs.api.jikan.moe/) (API no oficial y gratuita de MyAnimeList): `GET /v4/seasons/now`.
+- [Astro](https://astro.build) 7, **static** site. No UI frameworks or CSS libraries: HTML, native CSS, and TypeScript in Astro `<script>` tags.
+- Data from [Jikan v4](https://docs.api.jikan.moe/) (free, unofficial MyAnimeList API): `GET /v4/seasons/now`.
 - Node ≥ 22.12.
 
-## Comandos
+## Commands
 
 ```sh
 npm install
 npm run dev      # http://localhost:4321
-npm run build    # genera dist/
-npm run preview  # sirve dist/
+npm run build    # outputs dist/
+npm run preview  # serves dist/
 ```
 
-## Estructura
+## Layout
 
 ```
 src/
-  pages/index.astro       listado de la season: buscador, filtros, orden, modal
-  pages/today.astro       emisiones de hoy con cuenta atrás
-  layouts/Layout.astro    <head>, cabecera común (menú, selector de zona, switch JP/EN), variables CSS y estilos base
-  components/Modal.astro  <dialog> de detalle (marcado y estilos; cierre nativo con closedby="any")
-  lib/jikan.ts            descarga paginada de Jikan, tipo Anime (datos ya simplificados), caché en memoria
-  lib/time.ts             zonas/países, conversión de la hora de Japón a la local, "¿se emite hoy?"
-  lib/modal.ts            openModal(anime): rellena y abre el modal
-.github/workflows/refresh.yml  recompila en Vercel cada 6 h
+  pages/index.astro       season list: search, filters, sorting, modal
+  pages/today.astro       today's broadcasts with countdowns
+  layouts/Layout.astro    <head>, shared header (nav, time zone picker, JP/EN switch), CSS variables and base styles
+  components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
+  lib/jikan.ts            paginated Jikan fetch, Anime type (already simplified data), in-memory cache
+  lib/time.ts             countries/time zones, Japan → local time conversion, "does it air today?"
+  lib/modal.ts            openModal(anime): fills and opens the modal
+.github/workflows/refresh.yml  rebuilds on Vercel every 6 h
 ```
 
-## Cómo funciona
+## How it works
 
-- **Datos al compilar**: `seasonNow()` descarga todas las páginas de Jikan (respeta su límite de 3 peticiones/s, reintenta si recibe un 429, elimina entradas repetidas y excluye el contenido para adultos) y la convierte a un objeto plano propio (`Anime`) con solo los campos que usa la web. La página publicada es HTML estático: los visitantes nunca llaman a Jikan.
-- **Si Jikan falla**: no hay datos de respaldo. En `dev` la página muestra el error (se reintenta en la siguiente recarga); en `build` falla y Vercel mantiene el despliegue anterior.
-- **Datos en el cliente**: cada página incrusta los animes en `<script type="application/json" id="animes">` mediante `toJsonScript()`, que escapa `<` para que los datos no puedan cerrar la etiqueta.
-- **Horarios**: Jikan da día y hora en JST (UTC+9, sin horario de verano). `lib/time.ts` los convierte a la zona del usuario. Horas como "25:30" (madrugada japonesa) se desbordan correctamente al día siguiente.
-- **"Hoy" depende del usuario**: `/today` renderiza todos los animes ocultos y el cliente muestra los que se emiten hoy en su zona, cada segundo (cuenta atrás, cambio a "Emitido", paso de medianoche).
-- **Preferencias**: la zona horaria (`tz`) y el idioma del nombre (`lang`) se guardan en `localStorage` (siempre dentro de try/catch). Los filtros de `/` se guardan en la URL.
-- **Switch JP/EN**: solo CSS (`body:has(#lang-en:checked)`), sin JS para mostrar u ocultar.
+- **Data at build time**: `seasonNow()` fetches every Jikan page (honors its 3 requests/s limit, retries on 429, removes duplicate entries, excludes adult content) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call Jikan.
+- **When Jikan fails**: there is no fallback data. In `dev` the page shows the error (retried on the next reload); `build` fails and Vercel keeps the previous deployment.
+- **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
+- **Air times**: Jikan gives weekday and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
+- **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Emitido", midnight rollover).
+- **Preferences**: time zone (`tz`) and title language (`lang`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
+- **JP/EN switch**: pure CSS (`body:has(#lang-en:checked)`), no JS to show or hide titles.
 
-## Convenciones
+## Conventions
 
-- Lo más simple que funcione: funciones nativas de la plataforma antes que dependencias, sin abstracciones especulativas. Los atajos deliberados llevan un comentario `ponytail:` que explica su límite.
-- Los datos externos se insertan con `textContent`, nunca con `innerHTML`.
-- Los comentarios y los textos de la interfaz están en español.
-- **Commits, PRs, issues y la descripción del repositorio, siempre en inglés**: el proyecto será público.
-- Accesibilidad básica: elementos interactivos nativos (`<button>`, `<dialog>`, `<select>`), `:focus-visible` y `prefers-reduced-motion`.
-- Los colores son variables CSS en `:root`, con modo oscuro mediante `prefers-color-scheme`.
+- **English** for code comments, commits, PRs, issues, docs, and the repository description: the project will be public. **The UI text is in Spanish.**
+- Simplest thing that works: native platform features before dependencies, no speculative abstractions. Deliberate shortcuts carry a `ponytail:` comment explaining their limits.
+- External data is inserted with `textContent`, never `innerHTML`.
+- Basic accessibility: native interactive elements (`<button>`, `<dialog>`, `<select>`), `:focus-visible`, and `prefers-reduced-motion`.
+- Colors are CSS variables on `:root`, with dark mode via `prefers-color-scheme`.
 
-## Despliegue
+## Deployment
 
-En Vercel, que detecta Astro sin configuración. `.github/workflows/refresh.yml` llama a un enlace de despliegue (deploy hook) cada 6 horas para recompilar con datos frescos; necesita el secreto `VERCEL_DEPLOY_HOOK` en GitHub Actions.
+On Vercel, which detects Astro with no configuration. `.github/workflows/refresh.yml` calls a Vercel deploy hook every 6 hours to rebuild with fresh data; it needs the `VERCEL_DEPLOY_HOOK` secret in GitHub Actions.

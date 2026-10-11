@@ -37,7 +37,7 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
       </label>
     </header>
 
-    <!-- va antes del contenido: los scripts de las páginas leen #tz y #lang-en ya inicializados -->
+    <!-- placed before the content: page scripts read #tz and #lang-en already initialized -->
     <script>
       import { getTz } from '../lib/time';
 
@@ -150,12 +150,12 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
       .switch input:checked::after { transform: translateX(20px); }
       .switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-      /* ponytail: el switch solo cambia CSS vía :has(), cero JS para mostrar/ocultar */
+      /* ponytail: the switch only toggles CSS via :has(), zero JS to show/hide */
       .en { display: none; }
       body:has(#lang-en:checked) .en { display: inline; }
       body:has(#lang-en:checked) .jp { display: none; }
 
-      /* base de las cards; cada página define su forma */
+      /* base card styles; each page defines its own layout */
       .card {
         all: unset;
         background: var(--surface);
