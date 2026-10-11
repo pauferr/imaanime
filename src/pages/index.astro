@@ -1,0 +1,342 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
+
+const season = await seasonNow();
+const animes = season.data;
+const label = seasonLabel(season);
+const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
+const genres = [...new Set(animes.flatMap((a) => a.genres.map((g) => g.name)))].sort();
+const DAYS: Record<string, string> = {
+  Mondays: 'Lunes', Tuesdays: 'Martes', Wednesdays: 'Miércoles', Thursdays: 'Jueves',
+  Fridays: 'Viernes', Saturdays: 'Sábado', Sundays: 'Domingo',
+};
+// minúsculas y sin acentos, igual que la búsqueda en cliente
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+---
+
+<Layout title={`Ima Anime · ${label}`} description={`Animes en emisión: ${label}`} subtitle={`En emisión · ${label}`}>
+  <form class="filters" id="filters" onsubmit="return false">
+    <div class="row">
+      <input type="search" name="q" placeholder="Buscar por nombre…  ( / )" aria-label="Buscar por nombre" autocomplete="off" />
+      <select name="day" aria-label="Día de emisión">
+        <option value="">Cualquier día</option>
+        {Object.entries(DAYS).map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+      <select name="sort" aria-label="Ordenar">
+        <option value="new">Más recientes</option>
+        <option value="score">Mejor nota</option>
+        <option value="votes">Más populares</option>
+        <option value="name">Nombre A–Z</option>
+      </select>
+    </div>
+    <fieldset class="chips">
+      <legend>Géneros</legend>
+      {genres.map((g) => (
+        <label><input type="checkbox" name="genre" value={g} /><span>{g}</span></label>
+      ))}
+    </fieldset>
+    <p class="status">
+      <span id="count"></span>
+      <button type="reset" id="clear">Limpiar filtros</button>
+    </p>
+  </form>
+
+  <main class="grid">
+    {animes.map((a, i) => (
+      <button
+        class="card"
+        data-i={i}
+        data-name={norm(`${a.title} ${a.title_english ?? ''}`)}
+        data-genres={a.genres.map((g) => g.name).join('|')}
+        data-day={a.broadcast.day}
+        data-from={a.aired.from ?? ''}
+        data-score={a.score ?? 0}
+        data-votes={a.scored_by ?? 0}
+        aria-haspopup="dialog"
+      >
+        <img src={a.images.webp.large_image_url} alt="" loading="lazy" width="450" height="640" />
+        <div class="body">
+          <h2>
+            <span class="jp">{a.title}</span>
+            <span class="en">{a.title_english ?? a.title}</span>
+          </h2>
+          <p class="meta-line">
+            <span class="score">★ {score(a.score)}</span>
+            <span class="when">{DAYS[a.broadcast.day] ?? '?'}</span>
+            <span>{a.episodes ?? '?'} eps</span>
+          </p>
+          <p class="syn">{a.synopsis}</p>
+        </div>
+      </button>
+    ))}
+    <p class="empty" hidden>Ningún anime coincide con los filtros.</p>
+  </main>
+
+  <dialog id="modal">
+    <button class="close" aria-label="Cerrar">✕</button>
+    <img data-f="img" alt="" />
+    <div class="info">
+      <h2 data-f="title"></h2>
+      <p class="alt" data-f="alt"></p>
+      <p class="meta">
+        <strong data-f="score"></strong> <span data-f="votes"></span>
+      </p>
+      <ul class="tags" data-f="genres"></ul>
+      <p data-f="synopsis"></p>
+      <dl>
+        <dt>Episodios</dt><dd data-f="episodes"></dd>
+        <dt>Estudio</dt><dd data-f="studios"></dd>
+        <dt>Emisión</dt><dd data-f="aired"></dd>
+        <dt>Horario</dt><dd data-f="broadcast"></dd>
+      </dl>
+      <a data-f="url" target="_blank" rel="noopener">Ver en MyAnimeList →</a>
+    </div>
+  </dialog>
+
+  <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
+
+  <script>
+    import type { Anime } from '../lib/jikan';
+    import { currentTz, localSlot } from '../lib/time';
+
+    const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
+    const toggle = document.getElementById('lang-en') as HTMLInputElement;
+    const tzSelect = document.getElementById('tz') as HTMLSelectElement;
+
+    // --- filtros ---
+    const form = document.getElementById('filters') as HTMLFormElement;
+    const grid = document.querySelector('.grid')!;
+    const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+    const anime = (c: HTMLElement) => animes[Number(c.dataset.i)];
+    const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const shownName = (c: HTMLElement) => {
+      const a = anime(c);
+      return toggle.checked ? a.title_english ?? a.title : a.title;
+    };
+
+    function apply() {
+      const f = new FormData(form);
+      const q = norm(String(f.get('q')).trim());
+      const day = f.get('day');
+      const picked = f.getAll('genre') as string[];
+      const sort = f.get('sort') as 'new' | 'score' | 'votes' | 'name';
+      let n = 0;
+      for (const c of cards) {
+        const g = c.dataset.genres!.split('|');
+        // ponytail: géneros con lógica Y (debe tener todos los marcados)
+        const ok = (!q || c.dataset.name!.includes(q)) && (!day || c.dataset.day === day) && picked.every((p) => g.includes(p));
+        c.hidden = !ok;
+        n += +ok;
+      }
+      const by = {
+        new: (a: HTMLElement, b: HTMLElement) => b.dataset.from!.localeCompare(a.dataset.from!), // ISO: ordena bien como texto; sin fecha al final
+        score: (a: HTMLElement, b: HTMLElement) => +b.dataset.score! - +a.dataset.score!,
+        votes: (a: HTMLElement, b: HTMLElement) => +b.dataset.votes! - +a.dataset.votes!,
+        name: (a: HTMLElement, b: HTMLElement) => shownName(a).localeCompare(shownName(b), 'es'),
+      }[sort];
+      grid.prepend(...cards.sort(by));
+      document.getElementById('count')!.textContent = `${n} de ${cards.length} animes`;
+      grid.querySelector<HTMLElement>('.empty')!.hidden = n > 0;
+      document.getElementById('clear')!.hidden = !q && !day && !picked.length;
+      // estado en la URL: compartible y sobrevive a recargar
+      const params = new URLSearchParams(
+        [...f].filter(([k, v]) => v && !(k === 'sort' && v === 'new')) as [string, string][]
+      );
+      history.replaceState(null, '', params.size ? `?${params}` : location.pathname);
+    }
+
+    // restaurar filtros desde la URL
+    const params = new URLSearchParams(location.search);
+    (form.elements.namedItem('q') as HTMLInputElement).value = params.get('q') ?? '';
+    (form.elements.namedItem('day') as HTMLSelectElement).value = params.get('day') ?? '';
+    (form.elements.namedItem('sort') as HTMLSelectElement).value = params.get('sort') ?? 'new';
+    for (const cb of form.querySelectorAll<HTMLInputElement>('[name=genre]')) cb.checked = params.getAll('genre').includes(cb.value);
+
+    // horarios y día del filtro en la zona horaria elegida
+    function renderTz() {
+      for (const c of cards) {
+        const slot = localSlot(anime(c).broadcast, currentTz());
+        c.dataset.day = slot?.day ?? '';
+        c.querySelector('.when')!.textContent = slot?.short ?? '?';
+      }
+      apply();
+    }
+    tzSelect.addEventListener('change', renderTz);
+    toggle.addEventListener('change', apply); // el orden A–Z depende del idioma
+    form.addEventListener('input', apply);
+    form.addEventListener('reset', () => setTimeout(apply)); // reset limpia después del evento
+    renderTz();
+
+    // "/" enfoca el buscador
+    const modal = document.getElementById('modal') as HTMLDialogElement;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !(e.target as HTMLElement).closest('input, select, textarea') && !modal.open) {
+        e.preventDefault();
+        (form.elements.namedItem('q') as HTMLInputElement).focus();
+      }
+    });
+
+    // --- modal ---
+    // textContent, no innerHTML: los datos vienen de una API externa
+    const field = <T extends HTMLElement>(f: string) => modal.querySelector<T>(`[data-f="${f}"]`)!;
+    const set = (f: string, v: string | number) => (field(f).textContent = String(v));
+
+    grid.addEventListener('click', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
+      if (!card) return;
+      const a = anime(card);
+      const en = toggle.checked && a.title_english;
+      field<HTMLImageElement>('img').src = a.images.webp.large_image_url;
+      set('title', en ? a.title_english! : a.title);
+      set('alt', en ? a.title : a.title_english ?? '');
+      set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
+      set('votes', a.scored_by ? `(${a.scored_by.toLocaleString('es')} votos en MAL)` : '');
+      set('synopsis', a.synopsis);
+      set('episodes', a.episodes ?? '?');
+      set('studios', a.studios.map((s) => s.name).join(', '));
+      set('aired', a.aired.string);
+      const slot = localSlot(a.broadcast, currentTz());
+      set('broadcast', slot ? `${slot.long} (tu hora) · ${a.broadcast.string}` : a.broadcast.string);
+      field<HTMLAnchorElement>('url').href = a.url;
+      field('genres').replaceChildren(
+        ...a.genres.map((g) => Object.assign(document.createElement('li'), { textContent: g.name }))
+      );
+      modal.showModal();
+    });
+
+    modal.addEventListener('click', (e) => {
+      // click en el backdrop (fuera del contenido) o en ✕ cierra
+      const t = e.target as HTMLElement;
+      if (t === modal || t.closest('.close')) modal.close();
+    });
+  </script>
+
+  <!-- global: el modal crea <li> por JS, que no llevarían el atributo de los estilos con scope -->
+  <style is:global>
+    /* --- filtros --- */
+    .filters {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 16px 0;
+    }
+    .filters .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filters input[type='search'], .filters select {
+      font: inherit;
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .filters input[type='search'] { flex: 1 1 240px; min-width: 0; }
+    .filters :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; border: 0; padding: 0; margin: 0.75rem 0 0; }
+    .chips legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .chips input { position: absolute; opacity: 0; }
+    .chips span {
+      display: block;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chips span:hover { border-color: var(--accent); }
+    .chips input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chips input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .status { display: flex; align-items: center; gap: 1rem; margin: 0.75rem 0 1rem; color: var(--muted); font-size: 0.9rem; }
+    #clear { font: inherit; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+
+    /* --- cards (horizontales: portada a la izquierda) --- */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px 3rem;
+    }
+    .card {
+      all: unset;
+      display: grid;
+      grid-template-columns: 105px 1fr;
+      height: 150px;
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover, .card:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+    .card:hover img { transform: scale(1.06); }
+    .body { padding: 0.7rem 0.85rem; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+    .body h2 {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .meta-line { display: flex; gap: 0.6rem; margin: 0; font-size: 0.78rem; color: var(--muted); }
+    .syn {
+      margin: 0;
+      font-size: 0.83rem;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* --- modal --- */
+    dialog {
+      width: min(860px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      padding: 0;
+      border: 0;
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 24px 64px rgb(0 0 0 / 0.4);
+    }
+    dialog[open] { display: grid; grid-template-columns: 300px 1fr; animation: pop 0.25s ease; }
+    dialog::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(4px); }
+    dialog > img { width: 100%; height: 100%; object-fit: cover; }
+    .info { padding: 1.5rem; overflow-y: auto; }
+    .info h2 { margin: 0; font-size: 1.5rem; }
+    .alt { margin: 0.2rem 0 0; color: var(--muted); }
+    .meta strong { color: #eab308; font-size: 1.2rem; }
+    .meta span { color: var(--muted); font-size: 0.85rem; }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; list-style: none; }
+    .tags li { padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--bg); font-size: 0.8rem; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.9rem; }
+    dt { color: var(--muted); }
+    dd { margin: 0; }
+    .info a { color: var(--accent); font-weight: 600; }
+    .close {
+      position: absolute; top: 10px; right: 10px;
+      width: 32px; height: 32px;
+      border: 0; border-radius: 50%;
+      background: rgb(0 0 0 / 0.5);
+      color: #fff;
+      cursor: pointer;
+    }
+    @keyframes pop { from { opacity: 0; transform: scale(0.95); } }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .card { grid-template-columns: 90px 1fr; height: 130px; }
+      .syn { -webkit-line-clamp: 2; }
+      .filters select { flex: 1; }
+      dialog[open] { grid-template-columns: 1fr; overflow-y: auto; }
+      dialog > img { max-height: 280px; }
+    }
+  </style>
+</Layout>

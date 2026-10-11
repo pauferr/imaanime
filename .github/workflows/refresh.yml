@@ -1,0 +1,14 @@
+# Recompila la web en Vercel cada 6 h para refrescar notas y horarios desde Jikan.
+# Si Jikan está caído el build falla y Vercel mantiene la versión anterior publicada.
+# Configuración: Vercel → Project → Settings → Git → Deploy Hooks → crear hook,
+# y guardar su URL en GitHub → Settings → Secrets → Actions como VERCEL_DEPLOY_HOOK.
+name: Refrescar datos
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"

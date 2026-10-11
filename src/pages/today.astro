@@ -1,0 +1,157 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
+
+const season = await seasonNow();
+// Qué se emite "hoy" depende de la zona horaria del usuario: se renderizan todos y el cliente filtra
+const animes = season.data.filter((a) => a.broadcast.day && a.broadcast.time);
+const label = seasonLabel(season);
+---
+
+<Layout title="Hoy · Ima Anime" description={`Animes que se emiten hoy · ${label}`} subtitle={`Se emiten hoy · ${label}`}>
+  <h2 class="today-title" id="today-title">Hoy</h2>
+
+  <main class="today">
+    {animes.map((a, i) => (
+      <a class="tcard" data-i={i} href={a.url} target="_blank" rel="noopener" hidden>
+        <div class="cover">
+          <img src={a.images.webp.large_image_url} alt="" loading="lazy" width="450" height="640" />
+          <span class="badge countdown"></span>
+        </div>
+        <div class="tbody">
+          <h3>
+            <span class="jp">{a.title}</span>
+            <span class="en">{a.title_english ?? a.title}</span>
+          </h3>
+          <p class="tmeta">
+            <span class="time"></span>
+            <span class="score">★ {a.score == null ? 'N/A' : a.score.toFixed(2)}</span>
+          </p>
+          <p class="tsyn">{a.synopsis}</p>
+        </div>
+      </a>
+    ))}
+    <p class="empty" hidden>Hoy no se emite ningún anime de esta season.</p>
+  </main>
+
+  <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
+
+  <script>
+    import type { Anime } from '../lib/jikan';
+    import { airingToday, currentTz, timeIn } from '../lib/time';
+
+    const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
+    const list = document.querySelector('.today')!;
+    const cards = [...list.querySelectorAll<HTMLElement>('.tcard')];
+    const empty = list.querySelector<HTMLElement>('.empty')!;
+    const title = document.getElementById('today-title')!;
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    function countdown(ms: number) {
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      return `${h ? `${h}h ` : ''}${pad(Math.floor((s % 3600) / 60))}m ${pad(s % 60)}s`;
+    }
+
+    let order = '';
+    // ponytail: recalcula todo cada segundo; son pocas cards. Así también cambia solo a medianoche.
+    function tick() {
+      const tz = currentTz();
+      const now = new Date();
+      title.textContent = `Hoy, ${now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })}`;
+
+      const shown: { card: HTMLElement; at: number; aired: boolean }[] = [];
+      for (const card of cards) {
+        const a = animes[Number(card.dataset.i)];
+        const at = airingToday(a.broadcast, tz, now);
+        // fuera si no se emite hoy o si aún no se ha estrenado (aired.from es la fecha de estreno en Japón)
+        const jstDate = at && new Date(at.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+        const ok = !!at && (!a.aired.from || jstDate! >= a.aired.from.slice(0, 10));
+        card.hidden = !ok;
+        if (!ok) continue;
+        const left = at!.getTime() - now.getTime();
+        const aired = left <= 0;
+        card.classList.toggle('aired', aired);
+        card.querySelector('.countdown')!.textContent = aired ? '✓ Emitido' : `⏱ ${countdown(left)}`;
+        card.querySelector('.time')!.textContent = `🕒 ${timeIn(at!, tz)}`;
+        shown.push({ card, at: at!.getTime(), aired });
+      }
+
+      // por hora de emisión; los ya emitidos al final
+      shown.sort((x, y) => +x.aired - +y.aired || x.at - y.at);
+      const key = shown.map((s) => s.card.dataset.i).join();
+      if (key !== order) {
+        // solo se reordena si cambia: mover nodos cada segundo cortaría el hover
+        list.prepend(...shown.map((s) => s.card));
+        order = key;
+      }
+      empty.hidden = shown.length > 0;
+    }
+
+    document.getElementById('tz')!.addEventListener('change', tick);
+    tick();
+    setInterval(tick, 1000);
+  </script>
+
+  <style>
+    .today-title {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 16px 1rem;
+      font-size: 1.2rem;
+      text-transform: capitalize;
+    }
+    .today {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px 3rem;
+    }
+    .tcard {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      color: inherit;
+      text-decoration: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s;
+    }
+    .tcard:hover, .tcard:focus-visible { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-hover); }
+    .tcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .tcard.aired { opacity: 0.75; }
+    .tcard.aired:hover { opacity: 1; }
+    .cover { position: relative; overflow: hidden; }
+    .cover img { width: 100%; aspect-ratio: 45 / 64; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .tcard:hover .cover img { transform: scale(1.05); }
+    .badge {
+      position: absolute; left: 8px; bottom: 8px;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      background: rgb(0 0 0 / 0.78);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .aired .badge { background: var(--ok); }
+    .tbody { padding: 0.75rem 0.9rem 1rem; }
+    .tbody h3 { margin: 0 0 0.35rem; font-size: 1rem; line-height: 1.3; }
+    .tmeta { display: flex; gap: 0.75rem; margin: 0 0 0.4rem; font-size: 0.85rem; color: var(--muted); }
+    .tsyn {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    @media (max-width: 640px) {
+      .today { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    }
+  </style>
+</Layout>

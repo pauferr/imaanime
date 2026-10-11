@@ -1,0 +1,169 @@
+---
+import { ZONES, flag } from '../lib/time';
+
+interface Props {
+  title: string;
+  description: string;
+  subtitle: string;
+}
+const { title, description, subtitle } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1><a href="/">今 Ima Anime</a></h1>
+        <p>{subtitle}</p>
+      </div>
+      <nav>
+        <a href="/" aria-current={path === '/' ? 'page' : undefined}>Season</a>
+        <a href="/today" aria-current={path === '/today' ? 'page' : undefined}>Hoy</a>
+      </nav>
+      <select id="tz" aria-label="País / zona horaria para los horarios" title="Cambiar país / zona horaria">
+        {ZONES.map(([cc, name, tz]) => <option value={tz}>{flag(cc)} {name}</option>)}
+      </select>
+      <label class="switch">
+        <span>JP</span>
+        <input type="checkbox" id="lang-en" />
+        <span>EN</span>
+      </label>
+    </header>
+
+    <!-- va antes del contenido: los scripts de las páginas leen #tz y #lang-en ya inicializados -->
+    <script>
+      import { getTz } from '../lib/time';
+
+      const tz = document.getElementById('tz') as HTMLSelectElement;
+      const initial = getTz();
+      if (![...tz.options].some((o) => o.value === initial)) {
+        tz.add(new Option(`🌐 ${initial.split('/').pop()!.replaceAll('_', ' ')}`, initial), 0);
+      }
+      tz.value = initial;
+      tz.addEventListener('change', () => {
+        try { localStorage.setItem('tz', tz.value); } catch {}
+      });
+
+      const lang = document.getElementById('lang-en') as HTMLInputElement;
+      try { lang.checked = localStorage.getItem('lang') === 'en'; } catch {}
+      lang.addEventListener('change', () => {
+        try { localStorage.setItem('lang', lang.checked ? 'en' : 'jp'); } catch {}
+      });
+    </script>
+
+    <slot />
+
+    <style is:global>
+      :root {
+        --bg: #f5f5f7;
+        --surface: #fff;
+        --text: #1d1d1f;
+        --muted: #6e6e73;
+        --border: #d2d2d7;
+        --accent: #e11d48;
+        --ok: #16a34a;
+        --shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+        --shadow-hover: 0 12px 24px rgb(0 0 0 / 0.16);
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f0f12;
+          --surface: #1c1c21;
+          --text: #f2f2f5;
+          --muted: #9a9aa3;
+          --border: #34343b;
+          --ok: #22c55e;
+          --shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+          --shadow-hover: 0 12px 24px rgb(0 0 0 / 0.6);
+        }
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 16px 0;
+      }
+      h1 { margin: 0; font-size: 1.6rem; }
+      h1 a { color: inherit; text-decoration: none; }
+      header p { margin: 0.2rem 0 0; color: var(--muted); }
+
+      nav { display: flex; gap: 0.25rem; margin-left: auto; }
+      nav a {
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        color: var(--muted);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      nav a:hover { color: var(--text); }
+      nav a[aria-current='page'] { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+      #tz {
+        font: inherit;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+      }
+      :is(#tz, nav a):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .switch { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
+      .switch input {
+        appearance: none;
+        width: 44px; height: 24px;
+        border-radius: 12px;
+        background: var(--muted);
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .switch input::after {
+        content: '';
+        position: absolute; top: 3px; left: 3px;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.2s;
+      }
+      .switch input:checked { background: var(--accent); }
+      .switch input:checked::after { transform: translateX(20px); }
+      .switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      /* ponytail: el switch solo cambia CSS vía :has(), cero JS para mostrar/ocultar */
+      .en { display: none; }
+      body:has(#lang-en:checked) .en { display: inline; }
+      body:has(#lang-en:checked) .jp { display: none; }
+
+      .score { color: #eab308; font-weight: 700; }
+      .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 3rem 0; }
+
+      @media (max-width: 640px) {
+        nav { margin-left: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </body>
+</html>

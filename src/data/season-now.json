@@ -1,0 +1,325 @@
+{
+  "season": "fall",
+  "year": 2026,
+  "data": [
+    {
+      "mal_id": 1,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/1e1b4b/e0e7ff/webp?text=Hoshi+no+Kanata"
+        }
+      },
+      "title": "Hoshi no Kanata e",
+      "title_english": "Beyond the Stars",
+      "synopsis": "Tras perder su nave en un salto fallido, la cadete Rin Aozora debe guiar a una tripulación de desconocidos a través de un sector olvidado de la galaxia. Cada planeta guarda un fragmento del mapa que podría llevarles a casa… o a algo mucho peor.",
+      "score": 8.71,
+      "scored_by": 184230,
+      "episodes": 12,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Saturdays",
+        "time": "23:30",
+        "string": "Saturdays at 23:30 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-04T00:00:00+00:00",
+        "string": "Oct 4, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Studio Kumo"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Sci-Fi"
+        },
+        {
+          "name": "Adventure"
+        },
+        {
+          "name": "Drama"
+        }
+      ]
+    },
+    {
+      "mal_id": 2,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/7c2d12/ffedd5/webp?text=Ramen+Samurai"
+        }
+      },
+      "title": "Ramen Samurai",
+      "title_english": null,
+      "synopsis": "Un ronin sin dueño cambia la katana por el cucharón y abre un puesto de ramen en el Edo moderno. Duelos culinarios, clientes excéntricos y un caldo que lleva tres siglos cociéndose.",
+      "score": 7.94,
+      "scored_by": 61002,
+      "episodes": 24,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Sundays",
+        "time": "17:00",
+        "string": "Sundays at 17:00 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-05T00:00:00+00:00",
+        "string": "Oct 5, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Noodle Works"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Comedy"
+        },
+        {
+          "name": "Gourmet"
+        },
+        {
+          "name": "Historical"
+        }
+      ]
+    },
+    {
+      "mal_id": 3,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/064e3b/d1fae5/webp?text=Mori+no+Koe"
+        }
+      },
+      "title": "Mori no Koe ga Kikoeru",
+      "title_english": "I Can Hear the Forest",
+      "synopsis": "Una estudiante de botánica descubre que puede oír a los árboles del bosque detrás de su instituto. Pronto entiende que el bosque tiene miedo: alguien quiere talarlo antes de que acabe el invierno.",
+      "score": 8.12,
+      "scored_by": 45890,
+      "episodes": 12,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Thursdays",
+        "time": "22:00",
+        "string": "Thursdays at 22:00 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-02T00:00:00+00:00",
+        "string": "Oct 2, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Hikari Animation"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Fantasy"
+        },
+        {
+          "name": "Slice of Life"
+        },
+        {
+          "name": "Mystery"
+        }
+      ]
+    },
+    {
+      "mal_id": 4,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/312e81/c7d2fe/webp?text=Kurogane+Mecha"
+        }
+      },
+      "title": "Kurogane Kidou Senki",
+      "title_english": "Iron Frontline Chronicles",
+      "synopsis": "En una guerra que ya nadie recuerda por qué empezó, un piloto novato y una IA militar con demasiada personalidad se convierten en la última línea de defensa de una ciudad flotante.",
+      "score": 7.58,
+      "scored_by": 38711,
+      "episodes": 13,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Fridays",
+        "time": "24:00",
+        "string": "Fridays at 24:00 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-03T00:00:00+00:00",
+        "string": "Oct 3, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Steel Frame"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Mecha"
+        },
+        {
+          "name": "Action"
+        },
+        {
+          "name": "Military"
+        }
+      ]
+    },
+    {
+      "mal_id": 5,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/831843/fce7f3/webp?text=Koi+wa+Sanpo"
+        }
+      },
+      "title": "Koi wa Sanpo no Ato de",
+      "title_english": "Love After the Walk",
+      "synopsis": "Dos vecinos que pasean a sus perros a la misma hora cada mañana llevan un año sin dirigirse la palabra. Hasta que los perros deciden que ya es suficiente.",
+      "score": 7.81,
+      "scored_by": 29034,
+      "episodes": 12,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Wednesdays",
+        "time": "23:00",
+        "string": "Wednesdays at 23:00 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-01T00:00:00+00:00",
+        "string": "Oct 1, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Pastel Studio"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Romance"
+        },
+        {
+          "name": "Comedy"
+        }
+      ]
+    },
+    {
+      "mal_id": 6,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/111827/f3f4f6/webp?text=Yami+Kitan"
+        }
+      },
+      "title": "Yami Kitan",
+      "title_english": "Tales from the Dark",
+      "synopsis": "Antología de terror: cada episodio, una leyenda urbana distinta de Tokio contada por quien la sobrevivió. O eso dicen.",
+      "score": 7.23,
+      "scored_by": 17420,
+      "episodes": 10,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Mondays",
+        "time": "25:30",
+        "string": "Mondays at 25:30 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-06T00:00:00+00:00",
+        "string": "Oct 6, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Kage Pictures"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Horror"
+        },
+        {
+          "name": "Supernatural"
+        }
+      ]
+    },
+    {
+      "mal_id": 7,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/0c4a6e/e0f2fe/webp?text=Spike!"
+        }
+      },
+      "title": "Spike! Kanzaki Koukou Volley-bu",
+      "title_english": "Spike! Kanzaki High Volleyball Club",
+      "synopsis": "El club de voleibol del Kanzaki tiene cinco miembros, un entrenador que nunca aparece y tres meses para clasificarse para el torneo nacional. Lo que les falta en altura lo compensan con ruido.",
+      "score": 8.35,
+      "scored_by": 72310,
+      "episodes": 25,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Saturdays",
+        "time": "17:30",
+        "string": "Saturdays at 17:30 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-04T00:00:00+00:00",
+        "string": "Oct 4, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Rally Animation"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Sports"
+        },
+        {
+          "name": "School"
+        }
+      ]
+    },
+    {
+      "mal_id": 8,
+      "url": "https://myanimelist.net/",
+      "images": {
+        "webp": {
+          "large_image_url": "https://placehold.co/450x640/713f12/fef3c7/webp?text=Isekai+Library"
+        }
+      },
+      "title": "Isekai Toshokan no Shisho-san",
+      "title_english": "The Otherworld Librarian",
+      "synopsis": "Reencarnada en un mundo de magia, una bibliotecaria descubre que nadie ha ordenado los grimorios del reino en quinientos años. Su arma: el sistema de clasificación decimal.",
+      "score": null,
+      "scored_by": null,
+      "episodes": null,
+      "status": "Currently Airing",
+      "broadcast": {
+        "day": "Tuesdays",
+        "time": "22:30",
+        "string": "Tuesdays at 22:30 (JST)"
+      },
+      "aired": {
+        "from": "2026-10-07T00:00:00+00:00",
+        "string": "Oct 7, 2026 to ?"
+      },
+      "studios": [
+        {
+          "name": "Pagina"
+        }
+      ],
+      "genres": [
+        {
+          "name": "Isekai"
+        },
+        {
+          "name": "Fantasy"
+        },
+        {
+          "name": "Comedy"
+        }
+      ]
+    }
+  ]
+}
