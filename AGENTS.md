@@ -75,7 +75,7 @@ The site ships in English only, but is structured for more locales:
 ## Share previews
 
 - `Layout.astro` emits canonical, Open Graph and Twitter card tags from each page's `title`/`description` props, with absolute URLs from `site` in `astro.config.mjs` (Vercel's `VERCEL_PROJECT_PRODUCTION_URL` at build time, else `SITE_URL`, else localhost).
-- The share image is a static `public/og.png` (1200×630) plus `public/apple-touch-icon.png`; both were rendered once from SVG with sharp. Regenerate them by hand if the branding changes.
+- The share image `/og.jpg` is built by `src/pages/og.jpg.ts` on every deploy: the season's 24 top-rated covers (8×3) composited with sharp under `src/og-overlay.png`, a pre-rendered transparent PNG with the gradient, 今 logo, name and tagline (no text is drawn at build time: the build machine lacks CJK fonts). Regenerate the overlay by hand if the branding changes. `public/apple-touch-icon.png` is static.
 
 ## Analytics (Umami)
 
