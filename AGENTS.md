@@ -37,7 +37,7 @@ src/
   layouts/Layout.astro    <head>, shared header (nav, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
   lib/mal.ts              MAL season fetch and filtering, Anime type (already simplified data), caches
-  lib/anilist.ts          AniList episode schedule (episode number + exact air time) around build time
+  lib/anilist.ts          AniList episode schedule (episode number + exact air time) and previous/next season
   lib/time.ts             Japan → local time conversion, "does it air today?", date/weekday formatting
   lib/modal.ts            openModal(anime): fills and opens the modal
 .github/workflows/refresh.yml  rebuilds on Vercel every 6 h
@@ -46,7 +46,7 @@ src/
 ## How it works
 
 - **Data at build time**: `seasonNow()` fetches the current season from MAL (usually a single request of up to 500 entries; adult content excluded) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call MAL.
-- **Episodes (AniList)**: MAL has no per-episode schedule, so the build also asks [AniList](https://docs.anilist.co) (free, no key, 30 requests/min) for every episode airing from 2 days ago to 9 days ahead, matched by MAL id (`Anime.airings`). `/today` uses those exact times and episode numbers; `null` (AniList doesn't know the show) falls back to MAL's weekly slot without a number, and `[]` means a week off. If AniList fails, the build continues without episode numbers.
+- **Episodes (AniList)**: MAL has no per-episode schedule, so the build also asks [AniList](https://docs.anilist.co) (free, no key, 30 requests/min) for every episode airing from 2 days ago to 9 days ahead, matched by MAL id (`Anime.airings`). `/today` uses those exact times and episode numbers; `null` (AniList doesn't know the show) falls back to MAL's weekly slot without a number, and `[]` means a week off. The same query brings the direct previous/next season (`prequel`/`sequel`, preferring TV/ONA over movies; not the whole franchise), shown in the modal with the next episode and "N of total" episodes. If AniList fails, the build continues without episode numbers or related seasons.
 - **Which shows**: everything airing now (this season's new shows, plus continuing ones that started in earlier seasons) and this season's shows that haven't premiered yet. Finished shows, movies and music videos are excluded. `Anime.isNew` (starts this season) drives the New / Continuing tabs on `/`.
 - **Dev cache**: in `dev`, the last good MAL response is saved to `node_modules/.cache/imaanime/season-now.json` and reused for 6 hours, so reloads and restarts don't wait on MAL. Delete that file to force a refetch. `build` never uses it.
 - **When MAL fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.

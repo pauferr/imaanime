@@ -1,6 +1,7 @@
 // Fills and opens the <dialog> from src/components/Modal.astro
 import type { Anime } from './mal';
 import { formatDate, jstSlot, localSlot, localTz } from './time';
+import type { Related } from './anilist';
 import { pageLocale, ui } from '../i18n';
 
 // `cover`: the clicked card's image, which morphs into the modal image (View Transitions API)
@@ -11,6 +12,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   // textContent, not innerHTML: the data comes from an external API
   const field = <T extends HTMLElement>(f: string) => modal.querySelector<T>(`[data-f="${f}"]`)!;
   const set = (f: string, v: string | number) => (field(f).textContent = String(v));
+  const row = (r: string, show: boolean) => (modal.querySelector<HTMLElement>(`[data-row="${r}"]`)!.hidden = !show);
   const en = (document.getElementById('titles-en') as HTMLInputElement).checked && a.titleEn;
 
   const img = field<HTMLImageElement>('img');
@@ -20,7 +22,25 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
   set('votes', a.votes ? t.votes(a.votes.toLocaleString(locale)) : '');
   set('synopsis', a.synopsis ?? ui[locale].noSynopsis);
-  set('episodes', a.episodes ?? '?');
+  // AniList schedule: the next episode, and how many have aired (the one before it)
+  const now = Date.now() / 1000;
+  const next = a.airings?.find(([, at]) => at > now);
+  const aired = next ? next[0] - 1 : a.airings?.filter(([, at]) => at <= now).at(-1)?.[0];
+  set('episodes', aired ? t.episodesOf(aired, a.episodes ?? '?') : a.episodes ?? '?');
+  row('next', !!next);
+  if (next) {
+    const when = new Date(next[1] * 1000).toLocaleString(locale, {
+      weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: localTz(),
+    });
+    set('next', `${ui[locale].today.episode(next[0])} · ${when}`);
+  }
+  for (const [key, rel] of [['prequel', a.prequel], ['sequel', a.sequel]] as [string, Related | null][]) {
+    row(key, !!rel);
+    if (rel) {
+      field<HTMLAnchorElement>(key).href = rel.url;
+      set(key, en ? rel.titleEn ?? rel.title : rel.title);
+    }
+  }
   set('studios', a.studios.join(', '));
   set('aired', a.from ? formatDate(a.from, locale) : '?');
   const slot = localSlot(a, localTz(), locale);

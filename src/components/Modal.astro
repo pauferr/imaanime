@@ -16,11 +16,15 @@ const { t } = Astro.props as { t: Dict['modal'] };
     </p>
     <ul class="tags" data-f="genres"></ul>
     <p data-f="synopsis"></p>
+    <!-- rows wrapped in <div> can be hidden as a whole when there is no data -->
     <dl>
       <dt>{t.episodes}</dt><dd data-f="episodes"></dd>
-      <dt>{t.studio}</dt><dd data-f="studios"></dd>
-      <dt>{t.aired}</dt><dd data-f="aired"></dd>
+      <div data-row="next"><dt>{t.next}</dt><dd data-f="next"></dd></div>
       <dt>{t.broadcast}</dt><dd data-f="broadcast"></dd>
+      <dt>{t.aired}</dt><dd data-f="aired"></dd>
+      <dt>{t.studio}</dt><dd data-f="studios"></dd>
+      <div data-row="prequel"><dt>{t.prequel}</dt><dd><a data-f="prequel" target="_blank" rel="noopener"></a></dd></div>
+      <div data-row="sequel"><dt>{t.sequel}</dt><dd><a data-f="sequel" target="_blank" rel="noopener"></a></dd></div>
     </dl>
     <a data-f="url" target="_blank" rel="noopener">{t.viewOnMal}</a>
   </div>
@@ -63,6 +67,8 @@ const { t } = Astro.props as { t: Dict['modal'] };
   #modal dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.9rem; }
   #modal dt { color: var(--muted); }
   #modal dd { margin: 0; }
+  #modal dl > div { display: contents; }
+  #modal dd a { color: inherit; }
   #modal .info a { color: var(--accent); font-weight: 600; }
   #modal .close {
     position: absolute; top: 10px; right: 10px;

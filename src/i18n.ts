@@ -39,6 +39,10 @@ const en = {
   modal: {
     close: 'Close',
     episodes: 'Episodes',
+    episodesOf: (aired: number, total: number | string) => `${aired} of ${total}`,
+    next: 'Next episode',
+    prequel: 'Previous season',
+    sequel: 'Next season',
     studio: 'Studio',
     aired: 'Aired',
     broadcast: 'Broadcast',
