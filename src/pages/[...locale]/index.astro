@@ -86,7 +86,7 @@ const tabs = [
           <img src={a.img} alt="" loading="lazy" width="450" height="640" />
           <div class="badges">
             <span class="badge score">★ {score(a.score)}</span>
-            {a.votes && (
+            {a.score != null && a.votes && (
               <span class="badge" title={t.index.voters(a.votes.toLocaleString(locale))}>
                 <svg aria-hidden="true"><use href="#i-users" /></svg>{compact.format(a.votes)}
               </span>
