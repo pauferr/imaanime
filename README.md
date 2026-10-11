@@ -11,6 +11,7 @@
 - **Original or English titles**: switch between Japanese and English titles with a single click.
 - **See the full details**: click any anime to see the full synopsis, studio, episodes, genres, and air time.
 - **Air times in your time zone**: every broadcast is shown in your local time, automatically.
+- **Settings** (gear icon): title language, 24- or 12-hour clock, and time zone if you want something other than your device's.
 - **What's on today**: the **Today** section lists today's episodes by air time, with the episode number and a countdown to each one. Search works there too. Episodes that have already aired move to the end, marked in green.
 
 ## Where the data comes from

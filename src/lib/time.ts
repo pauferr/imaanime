@@ -5,8 +5,21 @@ type Broadcast = { day: string | null; time: string | null };
 export const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']; // MAL's day keys
 const HOUR = 3600e3;
 
-// 24-hour clock everywhere ("23:30", not "11:30 PM"), whatever the locale's default
-export const CLOCK = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } as const;
+// User preferences from the settings dialog (Layout.astro), stored in localStorage. Safe at build time: no
+// localStorage there, so the defaults apply.
+export const pref = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+// Time format: 24-hour by default ("23:30"); "12" in settings gives "11:30 PM"
+export const clock = () =>
+  pref('clock') === '12'
+    ? ({ hour: 'numeric', minute: '2-digit', hourCycle: 'h12' } as const)
+    : ({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } as const);
 
 // Air instant in week `offset` relative to the current week in Japan.
 // "25:30" (Japanese late-night notation) correctly overflows into the next day.
@@ -22,7 +35,7 @@ export function airInstant(b: Broadcast, offset = 0): Date | null {
 export const dateIn = (d: Date, tz: string) => d.toLocaleDateString('en-CA', { timeZone: tz });
 
 export const timeIn = (d: Date, tz: string, locale: string, weekday?: 'short' | 'long') =>
-  d.toLocaleString(locale, { weekday, ...CLOCK, timeZone: tz });
+  d.toLocaleString(locale, { weekday, ...clock(), timeZone: tz });
 
 // Local weekday and time of the weekly broadcast (uses the current week so the current DST offset applies)
 export function localSlot(b: Broadcast, tz: string, locale: string) {
@@ -45,8 +58,19 @@ export function airingToday(b: Broadcast, tz: string, now = new Date()) {
   return null;
 }
 
-// In the browser: the user's time zone, straight from the system settings
-export const localTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+export const browserTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// In the browser: the time zone chosen in settings, or the system one ("Automatic", the default)
+export function localTz() {
+  const tz = pref('tz');
+  if (!tz) return browserTz();
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz }); // a stored zone the browser no longer knows falls back
+    return tz;
+  } catch {
+    return browserTz();
+  }
+}
 
 // Localized weekday name for a MAL day key ("monday" → "Monday" in en, "lunes" in es)
 export const weekdayName = (day: string, locale: string, style: 'long' | 'short' = 'long') =>

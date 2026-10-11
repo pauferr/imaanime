@@ -33,22 +33,84 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         <a href={home} aria-current={current(home)}>{t.nav.season}</a>
         <a href={today} aria-current={current(today)}>{t.nav.today}</a>
       </nav>
-      <fieldset class="segmented small">
-        <legend class="sr-only">{t.titles.label}</legend>
-        <label><input type="radio" name="titles" id="titles-jp" checked /><span>{t.titles.romaji}</span></label>
-        <label><input type="radio" name="titles" id="titles-en" /><span>{t.titles.english}</span></label>
-      </fieldset>
+      <button type="button" class="icon-btn" commandfor="settings" command="show-modal" aria-label={t.settings.title} title={t.settings.title}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
     </header>
+
+    <!-- settings: applied and saved as soon as they change; pages listen for "settings-change" on document -->
+    <dialog id="settings" closedby="any" aria-labelledby="settings-title">
+      <form method="dialog">
+        <h2 id="settings-title">{t.settings.title}</h2>
+        <fieldset>
+          <legend>{t.titles.label}</legend>
+          <div class="segmented">
+            <label><input type="radio" name="titles" id="titles-jp" value="jp" checked /><span>{t.titles.romaji}</span></label>
+            <label><input type="radio" name="titles" id="titles-en" value="en" /><span>{t.titles.english}</span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>{t.settings.clock}</legend>
+          <div class="segmented">
+            <label><input type="radio" name="clock" value="24" checked /><span>{t.settings.h24}</span></label>
+            <label><input type="radio" name="clock" value="12" /><span>{t.settings.h12}</span></label>
+          </div>
+        </fieldset>
+        <label class="field">
+          <span>{t.settings.tz}</span>
+          <select name="tz" data-auto-label={t.settings.auto('{tz}')}></select>
+        </label>
+        <button class="done">{t.settings.done}</button>
+      </form>
+    </dialog>
 
     <!-- placed before the content: page scripts read #titles-en already initialized -->
     <script>
-      // title language (JP/EN) is a separate preference from the UI locale
-      // pages read #titles-en.checked and listen for "titles-change" on document
-      const en = document.getElementById('titles-en') as HTMLInputElement;
-      try { if (localStorage.getItem('titles') === 'en') en.checked = true; } catch {}
-      document.querySelector('.segmented.small')!.addEventListener('change', () => {
-        try { localStorage.setItem('titles', en.checked ? 'en' : 'jp'); } catch {}
-        document.dispatchEvent(new Event('titles-change'));
+      import { browserTz, pref } from '../lib/time';
+
+      // Settings: title language (independent of the UI locale), time format and time zone.
+      // Pages read them through #titles-en and lib/time.ts (clock(), localTz()).
+      const dialog = document.getElementById('settings') as HTMLDialogElement;
+      const form = dialog.querySelector('form')!;
+      const tz = form.elements.namedItem('tz') as HTMLSelectElement;
+      const save = (key: string, value: string) => {
+        try {
+          value ? localStorage.setItem(key, value) : localStorage.removeItem(key);
+        } catch {}
+      };
+
+      for (const key of ['titles', 'clock']) {
+        const saved = pref(key);
+        const input = form.querySelector<HTMLInputElement>(`input[name="${key}"][value="${saved}"]`);
+        if (input) input.checked = true;
+      }
+
+      // Time zone list: "Automatic" (the browser's zone, default) plus every zone the browser knows,
+      // with its current UTC offset. Built on first open, so pages that never open settings don't pay for it.
+      function fillZones() {
+        if (tz.options.length) return;
+        const now = new Date();
+        const offset = (zone: string) =>
+          new Intl.DateTimeFormat('en', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(now).find((p) => p.type === 'timeZoneName')!.value;
+        tz.add(new Option(tz.dataset.autoLabel!.replace('{tz}', browserTz()), ''));
+        for (const zone of Intl.supportedValuesOf('timeZone')) tz.add(new Option(`${zone.replaceAll('_', ' ')} (${offset(zone)})`, zone));
+        tz.value = pref('tz') ?? '';
+      }
+      document.querySelector('[commandfor="settings"]')!.addEventListener('click', () => {
+        fillZones();
+        // commandfor/command opens the dialog natively; older browsers need the call
+        if (!('command' in HTMLButtonElement.prototype)) dialog.showModal();
+      });
+
+      form.addEventListener('change', () => {
+        const data = new FormData(form);
+        save('titles', data.get('titles') === 'en' ? 'en' : '');
+        save('clock', data.get('clock') === '12' ? '12' : '');
+        save('tz', String(data.get('tz') ?? ''));
+        document.dispatchEvent(new Event('settings-change'));
       });
     </script>
 
@@ -123,13 +185,52 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         border-radius: 8px;
         font-weight: 600;
         color: var(--muted);
+        white-space: nowrap;
         cursor: pointer;
         transition: background 0.15s, color 0.15s;
       }
       .segmented small { font-weight: 500; opacity: 0.7; }
       .segmented input:checked + span { background: var(--accent); color: #fff; }
       .segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .segmented.small span { padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+      /* header settings button and dialog */
+      .icon-btn {
+        display: grid; place-items: center;
+        width: 38px; height: 38px;
+        border: 1px solid var(--border); border-radius: 10px;
+        background: var(--surface); color: var(--text);
+        cursor: pointer;
+      }
+      .icon-btn svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+      .icon-btn:hover svg { transform: rotate(45deg); }
+      .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      #settings {
+        width: min(420px, calc(100vw - 32px));
+        padding: 1.25rem;
+        border: 0; border-radius: 16px;
+        background: var(--bg); color: var(--text);
+        box-shadow: 0 24px 64px rgb(0 0 0 / 0.4);
+      }
+      #settings::backdrop { background: rgb(0 0 0 / 0.5); backdrop-filter: blur(3px); }
+      #settings form { display: grid; gap: 1.1rem; }
+      #settings h2 { margin: 0; font-size: 1.2rem; }
+      #settings legend, #settings .field > span { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+      #settings fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+      #settings legend { padding: 0; }
+      #settings select {
+        width: 100%;
+        font: inherit;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: var(--surface); color: var(--text);
+      }
+      #settings .done {
+        justify-self: end;
+        font: inherit; font-weight: 600;
+        padding: 0.5rem 1.1rem;
+        border: 0; border-radius: 8px;
+        background: var(--accent); color: #fff;
+        cursor: pointer;
+      }
 
       /* ponytail: title language only toggles CSS via :has(), zero JS to show/hide */
       .en { display: none; }
@@ -190,7 +291,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         /* logo on its own row; nav and title language share the second one */
         header > div:first-child { flex-basis: 100%; }
         nav { margin-left: 0; }
-        .segmented.small { margin-left: auto; }
+        .icon-btn { margin-left: auto; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { transition: none !important; animation: none !important; }

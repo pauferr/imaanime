@@ -220,7 +220,7 @@ const tabs = [
       }
       apply();
     }
-    document.addEventListener('titles-change', apply); // A–Z order depends on the title language
+    document.addEventListener('settings-change', renderTz); // title language (A–Z order), time zone and format
     form.addEventListener('input', apply);
     renderTz();
 

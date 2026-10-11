@@ -122,6 +122,7 @@ const label = seasonLabel(t, season);
       if (card) openModal(animes[Number(card.dataset.i)], card.querySelector('img')!);
     });
     search.addEventListener('input', tick);
+    document.addEventListener('settings-change', tick);
     // "/" focuses the search box, as on /
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && !(e.target as HTMLElement).closest('input, select, textarea') && !(document.getElementById('modal') as HTMLDialogElement).open) {

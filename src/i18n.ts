@@ -7,6 +7,15 @@ const en = {
   currentSeason: 'Current season',
   nav: { season: 'Season', today: 'Today' },
   titles: { label: 'Title language', romaji: 'Romaji', english: 'English' },
+  settings: {
+    title: 'Settings',
+    clock: 'Time format',
+    h24: '24-hour',
+    h12: '12-hour',
+    tz: 'Time zone',
+    auto: (tz: string) => `Automatic (${tz})`,
+    done: 'Done',
+  },
   index: {
     description: (season: string) => `Anime airing now: ${season}`,
     subtitle: (season: string) => `Airing now · ${season}`,
