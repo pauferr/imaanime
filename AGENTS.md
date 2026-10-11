@@ -47,6 +47,7 @@ src/
 - Lo más simple que funcione: funciones nativas de la plataforma antes que dependencias, sin abstracciones especulativas. Los atajos deliberados llevan un comentario `ponytail:` que explica su límite.
 - Los datos externos se insertan con `textContent`, nunca con `innerHTML`.
 - Los comentarios y los textos de la interfaz están en español.
+- **Commits, PRs, issues y la descripción del repositorio, siempre en inglés**: el proyecto será público.
 - Accesibilidad básica: elementos interactivos nativos (`<button>`, `<dialog>`, `<select>`), `:focus-visible` y `prefers-reduced-motion`.
 - Los colores son variables CSS en `:root`, con modo oscuro mediante `prefers-color-scheme`.
 
