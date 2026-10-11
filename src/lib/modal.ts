@@ -1,6 +1,6 @@
 // Fills and opens the <dialog> from src/components/Modal.astro
 import type { Anime } from './mal';
-import { formatDate, jstSlot, localSlot, localTz } from './time';
+import { CLOCK, formatDate, jstSlot, localSlot, localTz } from './time';
 import type { Related } from './anilist';
 
 // "S03E05" for episodes; specials and movies are a single release, so their format name instead
@@ -35,7 +35,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   row('next', !!next);
   if (next) {
     const when = new Date(next[1] * 1000).toLocaleString(locale, {
-      weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: localTz(),
+      weekday: 'short', month: 'short', day: 'numeric', ...CLOCK, timeZone: localTz(),
     });
     set('next', `${episodeLabel(a, next[0], locale)} · ${when}`);
   }

@@ -54,6 +54,7 @@ src/
 - **When MAL fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
 - **Air times**: MAL gives weekday (`"saturday"`) and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
+- **TODAY tag on `/`**: cards airing today get a green tag, computed with the same `todaysEpisode()` as `/today` so both always agree. It is set on load (no ticking), unlike `/today`.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover). It has its own title search.
 - **Time zone**: always the browser's (`localTz()`), no picker. **Title language** (`titles`) is stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted). Search ignores the tab, so continuing shows are found from New too.
 - **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Type (OR: TV series, ONA, Movie…) and genres (AND) are listed by frequency.
@@ -64,7 +65,7 @@ src/
 The site ships in English only, but is structured for more locales:
 
 - **All UI strings** live in `src/i18n.ts` (`ui.en`). Pages and components read them through `t = ui[locale]`; client scripts get the locale from `<html lang>` via `pageLocale()`.
-- **No translated lists**: dates, times, numbers, durations, and weekdays (`weekdayName`) are formatted by `Intl` with the page locale.
+- **No translated lists**: dates, times, numbers, durations, and weekdays (`weekdayName`) are formatted by `Intl` with the page locale. Times always use a 24-hour clock (`CLOCK` in `lib/time.ts`), regardless of the locale's default.
 - **Routes**: pages live in `src/pages/[...locale]/` and `localePaths()` generates one copy per locale. The default locale has no prefix (`/`, `/today`); others get one (`/es/`, `/es/today`). Build internal links with `localeUrl(locale, path)`.
 - **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated. Only MAL's main genres are kept (`MAIN_GENRES` in `lib/mal.ts`); themes, demographics and explicit tags are dropped.
 

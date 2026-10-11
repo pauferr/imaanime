@@ -5,6 +5,9 @@ type Broadcast = { day: string | null; time: string | null };
 export const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']; // MAL's day keys
 const HOUR = 3600e3;
 
+// 24-hour clock everywhere ("23:30", not "11:30 PM"), whatever the locale's default
+export const CLOCK = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } as const;
+
 // Air instant in week `offset` relative to the current week in Japan.
 // "25:30" (Japanese late-night notation) correctly overflows into the next day.
 export function airInstant(b: Broadcast, offset = 0): Date | null {
@@ -19,7 +22,7 @@ export function airInstant(b: Broadcast, offset = 0): Date | null {
 export const dateIn = (d: Date, tz: string) => d.toLocaleDateString('en-CA', { timeZone: tz });
 
 export const timeIn = (d: Date, tz: string, locale: string, weekday?: 'short' | 'long') =>
-  d.toLocaleString(locale, { weekday, hour: 'numeric', minute: '2-digit', timeZone: tz });
+  d.toLocaleString(locale, { weekday, ...CLOCK, timeZone: tz });
 
 // Local weekday and time of the weekly broadcast (uses the current week so the current DST offset applies)
 export function localSlot(b: Broadcast, tz: string, locale: string) {
@@ -70,4 +73,22 @@ export function newestFirst(a: { from: string | null }, b: { from: string | null
   const group = (from: string | null) => (!from ? 2 : from.slice(0, 10) <= today ? 0 : 1);
   const ga = group(a.from), gb = group(b.from);
   return ga - gb || (ga === 0 ? b.from!.localeCompare(a.from!) : (a.from ?? '').localeCompare(b.from ?? ''));
+}
+
+// Today's broadcast in time zone `tz`: AniList's exact episode schedule when it knows the show (an empty list
+// means a week off), otherwise MAL's weekly slot without an episode number. Shared by / (TODAY tag) and /today.
+export function todaysEpisode(
+  a: Broadcast & { airings: [number, number][] | null; from: string | null },
+  tz: string,
+  now = new Date()
+): { at: Date; ep?: number } | null {
+  if (a.airings) {
+    const today = dateIn(now, tz);
+    const hit = a.airings.find(([, at]) => dateIn(new Date(at * 1000), tz) === today);
+    return hit ? { at: new Date(hit[1] * 1000), ep: hit[0] } : null;
+  }
+  const at = airingToday(a, tz, now);
+  // not premiered yet (from is the premiere date in Japan)
+  const jstDate = at && new Date(at.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+  return at && (!a.from || jstDate! >= a.from.slice(0, 10)) ? { at } : null;
 }

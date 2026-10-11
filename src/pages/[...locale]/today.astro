@@ -56,7 +56,7 @@ const label = seasonLabel(t, season);
 
   <script>
     import type { Anime } from '../../lib/mal';
-    import { airingToday, dateIn, localTz, timeIn } from '../../lib/time';
+    import { localTz, timeIn, todaysEpisode } from '../../lib/time';
     import { episodeLabel, openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
@@ -72,20 +72,6 @@ const label = seasonLabel(t, season);
     // lowercase without diacritics, same as the search on /
     const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const names = animes.map((a) => norm(`${a.title} ${a.titleEn ?? ''}`));
-
-    // Today's broadcast: AniList's exact episode schedule when it knows the show (an empty list means a
-    // week off), otherwise MAL's weekly slot without an episode number
-    function todaysEpisode(a: Anime, tz: string, now: Date): { at: Date; ep?: number } | null {
-      if (a.airings) {
-        const today = dateIn(now, tz);
-        const hit = a.airings.find(([, at]) => dateIn(new Date(at * 1000), tz) === today);
-        return hit ? { at: new Date(hit[1] * 1000), ep: hit[0] } : null;
-      }
-      const at = airingToday(a, tz, now);
-      // not premiered yet (from is the premiere date in Japan)
-      const jstDate = at && new Date(at.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
-      return at && (!a.from || jstDate! >= a.from.slice(0, 10)) ? { at } : null;
-    }
 
     const duration = new Intl.DurationFormat(locale, { style: 'narrow' }); // "2h 5m 12s"
     const countdown = (ms: number) => {

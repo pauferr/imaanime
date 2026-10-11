@@ -103,6 +103,7 @@ const tabs = [
             )}
           </div>
           <div class="cover-tags">
+            <span class="tag today" hidden>{t.today.title}</span>
             {a.isNew ? <span class="tag new">{t.isNew}</span> : <span class="tag">{t.continuing}</span>}
             {t.formats.tag[a.format] && <span class="tag format">{t.formats.tag[a.format]}</span>}
           </div>
@@ -123,7 +124,7 @@ const tabs = [
 
   <script>
     import type { Anime } from '../../lib/mal';
-    import { localSlot, localTz, newestFirst } from '../../lib/time';
+    import { localSlot, localTz, newestFirst, todaysEpisode } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
@@ -213,6 +214,8 @@ const tabs = [
       for (const c of cards) {
         const slot = localSlot(anime(c), localTz(), locale);
         c.dataset.day = slot?.day ?? '';
+        // same rule as /today, so the TODAY tag and that page always agree
+        c.querySelector<HTMLElement>('.tag.today')!.hidden = !todaysEpisode(anime(c), localTz());
         c.querySelector('.when')!.textContent = slot?.short ?? ''; // no schedule on MAL: show nothing rather than "?"
       }
       apply();
