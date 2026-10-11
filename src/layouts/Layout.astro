@@ -21,6 +21,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
     <header>
@@ -150,7 +151,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       .card img { display: block; width: 100%; object-fit: cover; transition: transform 0.3s ease; }
       /* poster cover with a badge on top (score on /, countdown on /today) */
       .cover { position: relative; overflow: hidden; }
-      .cover img { aspect-ratio: 45 / 64; }
+      .cover img { height: auto; aspect-ratio: 45 / 64; } /* height:auto: the img height attribute would otherwise win over aspect-ratio */
       .badge {
         position: absolute; left: 8px; bottom: 8px;
         padding: 0.25rem 0.55rem;
@@ -184,7 +185,10 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 3rem 0; }
 
       @media (max-width: 640px) {
+        /* logo on its own row; nav and title language share the second one */
+        header > div:first-child { flex-basis: 100%; }
         nav { margin-left: 0; }
+        .segmented.small { margin-left: auto; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { transition: none !important; animation: none !important; }

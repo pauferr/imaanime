@@ -142,11 +142,13 @@ const tabs = [
       const day = f.get('day');
       const picked = f.getAll('genre') as string[];
       const sort = f.get('sort') as 'new' | 'score' | 'votes' | 'name';
+      // searching looks across every tab: "one piece" from the New tab should still find it (cards carry New/Continuing tags)
+      const inTab = (a: Anime) => !!q || show === 'all' || (show === 'new') === a.isNew;
       let n = 0;
       for (const c of cards) {
         const a = anime(c);
         const ok =
-          (show === 'all' || (show === 'new') === a.isNew) &&
+          inTab(a) &&
           (!q || names[Number(c.dataset.i)].includes(q)) &&
           (!day || c.dataset.day === day) &&
           picked.every((p) => a.genres.includes(p)); // ponytail: genres use AND logic (must have every selected one)
@@ -166,7 +168,7 @@ const tabs = [
       const active = (day ? 1 : 0) + picked.length;
       const status = document.getElementById('count')!;
       status.hidden = !q && !active;
-      status.textContent = t.index.count(n, cards.filter((c) => show === 'all' || (show === 'new') === anime(c).isNew).length);
+      status.textContent = t.index.count(n, cards.filter((c) => inTab(anime(c))).length);
       const badge = document.getElementById('active')!;
       badge.hidden = !active;
       badge.textContent = String(active);
