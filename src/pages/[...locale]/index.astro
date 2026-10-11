@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Modal from '../../components/Modal.astro';
-import { seasonNow, toJsonScript } from '../../lib/jikan';
+import { seasonNow, toJsonScript } from '../../lib/mal';
 import { WEEK, weekdayName } from '../../lib/time';
 import { localeOf, localePaths, seasonLabel, ui } from '../../i18n';
 
@@ -70,7 +70,7 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
-    import type { Anime } from '../../lib/jikan';
+    import type { Anime } from '../../lib/mal';
     import { currentTz, localSlot } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';

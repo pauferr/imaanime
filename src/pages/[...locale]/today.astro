@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Modal from '../../components/Modal.astro';
-import { seasonNow, toJsonScript } from '../../lib/jikan';
+import { seasonNow, toJsonScript } from '../../lib/mal';
 import { localeOf, localePaths, seasonLabel, ui } from '../../i18n';
 
 export const getStaticPaths = localePaths;
@@ -45,7 +45,7 @@ const label = seasonLabel(t, season);
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
-    import type { Anime } from '../../lib/jikan';
+    import type { Anime } from '../../lib/mal';
     import { airingToday, currentTz, timeIn } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';

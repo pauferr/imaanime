@@ -1,8 +1,8 @@
-// Air times: Jikan gives weekday + time in JST (UTC+9, Japan has no daylight saving time).
+// Air times: MAL gives weekday + time in JST (UTC+9, Japan has no daylight saving time).
 
 type Broadcast = { day: string | null; time: string | null };
 
-export const WEEK = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+export const WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']; // MAL's day keys
 const HOUR = 3600e3;
 
 // The time zone is what matters for air times; the country is just the flag label.
@@ -61,7 +61,7 @@ export function localSlot(b: Broadcast, tz: string, locale: string) {
   const d = airInstant(b);
   if (!d) return null;
   return {
-    day: d.toLocaleString('en-US', { weekday: 'long', timeZone: tz }) + 's',
+    day: d.toLocaleString('en-US', { weekday: 'long', timeZone: tz }).toLowerCase(),
     short: timeIn(d, tz, locale, 'short'),
     long: timeIn(d, tz, locale, 'long'),
   };
@@ -80,6 +80,20 @@ export function airingToday(b: Broadcast, tz: string, now = new Date()) {
 // In the browser: the time zone picked in the header selector (Layout.astro)
 export const currentTz = () => (document.getElementById('tz') as HTMLSelectElement | null)?.value || getTz();
 
-// Localized weekday name for a Jikan day key ("Mondays" → "Monday" in en, "lunes" in es)
+// Localized weekday name for a MAL day key ("monday" → "Monday" in en, "lunes" in es)
 export const weekdayName = (day: string, locale: string) =>
   new Date(Date.UTC(2024, 0, 7 + WEEK.indexOf(day))).toLocaleString(locale, { weekday: 'long', timeZone: 'UTC' }); // 2024-01-07 was a Sunday
+
+// Original broadcast slot in Japan time, e.g. "Saturday 11:30 PM JST"
+export function jstSlot(b: Broadcast, locale: string) {
+  const d = airInstant(b);
+  return d && `${timeIn(d, 'Asia/Tokyo', locale, 'long')} JST`;
+}
+
+// Premiere date; MAL sometimes only knows the month ("2026-10") or the year
+export function formatDate(iso: string, locale: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
+  const opts: Intl.DateTimeFormatOptions = d ? { dateStyle: 'medium' } : m ? { year: 'numeric', month: 'long' } : { year: 'numeric' };
+  return date.toLocaleDateString(locale, { ...opts, timeZone: 'UTC' });
+}

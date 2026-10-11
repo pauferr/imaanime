@@ -5,8 +5,18 @@ Technical guide to Ima Anime for anyone working on the code, human or agent. The
 ## Stack
 
 - [Astro](https://astro.build) 7, **static** site. No UI frameworks or CSS libraries: HTML, native CSS, and TypeScript in Astro `<script>` tags.
-- Data from [Jikan v4](https://docs.api.jikan.moe/) (free, unofficial MyAnimeList API): `GET /v4/seasons/now`.
+- Data from the [official MyAnimeList API v2](https://myanimelist.net/apiconfig/references/api/v2): `GET /v2/anime/season/{year}/{season}`. Needs a free client ID (see Setup). The unofficial Jikan API was used before; its public service shut down on Oct 1, 2026.
 - Node ≥ 22.12.
+
+## Setup
+
+Create a client ID at https://myanimelist.net/apiconfig (any app type; no OAuth needed for public data) and put it in `.env` (gitignored):
+
+```sh
+MAL_CLIENT_ID=your-client-id
+```
+
+On Vercel, add the same `MAL_CLIENT_ID` as a project environment variable.
 
 ## Commands
 
@@ -26,7 +36,7 @@ src/
   pages/[...locale]/today.astro  today's broadcasts with countdowns
   layouts/Layout.astro    <head>, shared header (nav, time zone picker, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
-  lib/jikan.ts            paginated Jikan fetch, Anime type (already simplified data), in-memory cache
+  lib/mal.ts              MAL season fetch and filtering, Anime type (already simplified data), caches
   lib/time.ts             countries/time zones, Japan → local time conversion, "does it air today?"
   lib/modal.ts            openModal(anime): fills and opens the modal
 .github/workflows/refresh.yml  rebuilds on Vercel every 6 h
@@ -34,11 +44,12 @@ src/
 
 ## How it works
 
-- **Data at build time**: `seasonNow()` fetches every Jikan page (honors its 3 requests/s limit, retries on 429, removes duplicate entries, excludes adult content) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call Jikan.
-- **Dev cache**: in `dev`, the last good Jikan response is saved to `node_modules/.cache/imaanime/season-now.json` and reused for 6 hours, so reloads and restarts don't wait on Jikan. Delete that file to force a refetch. `build` never uses it.
-- **When Jikan fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.
+- **Data at build time**: `seasonNow()` fetches the current season from MAL (usually a single request of up to 500 entries; adult content excluded) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call MAL.
+- **Which shows**: only those that start this season and haven't finished, excluding movies and music videos. MAL's season list also includes long-running continuing shows; they are filtered out on purpose.
+- **Dev cache**: in `dev`, the last good MAL response is saved to `node_modules/.cache/imaanime/season-now.json` and reused for 6 hours, so reloads and restarts don't wait on MAL. Delete that file to force a refetch. `build` never uses it.
+- **When MAL fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
-- **Air times**: Jikan gives weekday and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
+- **Air times**: MAL gives weekday (`"saturday"`) and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
 - **Preferences**: time zone (`tz`) and title language (`titles`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
 - **JP/EN title switch**: pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
@@ -50,7 +61,7 @@ The site ships in English only, but is structured for more locales:
 - **All UI strings** live in `src/i18n.ts` (`ui.en`). Pages and components read them through `t = ui[locale]`; client scripts get the locale from `<html lang>` via `pageLocale()`.
 - **No translated lists**: dates, times, numbers, durations, weekdays (`weekdayName`) and country names (`zoneOptions`, via `Intl.DisplayNames`) are formatted by `Intl` with the page locale.
 - **Routes**: pages live in `src/pages/[...locale]/` and `localePaths()` generates one copy per locale. The default locale has no prefix (`/`, `/today`); others get one (`/es/`, `/es/today`). Build internal links with `localeUrl(locale, path)`.
-- **Data stays as Jikan provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated.
+- **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated.
 
 **To add a language**: add a dictionary to `ui` in `src/i18n.ts` (typed as `Dict`, so TypeScript flags any missing key). Nothing else is required. A language picker in the header and `hreflang` links are not built yet; add them together with the second language.
 

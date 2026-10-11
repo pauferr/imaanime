@@ -1,5 +1,5 @@
-# Rebuilds the site on Vercel every 6 h to refresh scores and air times from Jikan.
-# If Jikan is down the build fails and Vercel keeps the previous deployment live.
+# Rebuilds the site on Vercel every 6 h to refresh scores and air times from MyAnimeList.
+# If the MAL API is down the build fails and Vercel keeps the previous deployment live.
 # Setup: Vercel → Project → Settings → Git → Deploy Hooks → create a hook,
 # and store its URL in GitHub → Settings → Secrets → Actions as VERCEL_DEPLOY_HOOK.
 name: Refresh data

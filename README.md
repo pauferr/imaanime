@@ -15,6 +15,6 @@
 
 ## Where the data comes from
 
-Information and scores come from [MyAnimeList](https://myanimelist.net) via [Jikan](https://jikan.moe), and are refreshed several times a day.
+Information and scores come from [MyAnimeList](https://myanimelist.net), through its official API, and are refreshed several times a day.
 
 Ima Anime is an independent project and is not affiliated with MyAnimeList.
