@@ -11,10 +11,10 @@
 - **Original or English titles**: switch between Japanese and English titles with a single click.
 - **See the full details**: click any anime to see the full synopsis, studio, episodes, genres, and air time.
 - **Air times in your time zone**: every broadcast is shown in your local time, automatically.
-- **What's on today**: the **Today** section lists today's episodes by air time, with a countdown to each new episode. Episodes that have already aired move to the end, marked in green.
+- **What's on today**: the **Today** section lists today's episodes by air time, with the episode number and a countdown to each one. Search works there too. Episodes that have already aired move to the end, marked in green.
 
 ## Where the data comes from
 
-Information and scores come from [MyAnimeList](https://myanimelist.net), through its official API, and are refreshed several times a day.
+Information and scores come from [MyAnimeList](https://myanimelist.net), through its official API; episode numbers and exact air times come from [AniList](https://anilist.co). Both are refreshed several times a day.
 
 Ima Anime is an independent project and is not affiliated with MyAnimeList.

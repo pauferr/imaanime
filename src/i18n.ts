@@ -34,6 +34,7 @@ const en = {
     heading: (date: string) => `Today, ${date}`,
     empty: 'No anime from this season airs today.',
     aired: '✓ Aired',
+    episode: (n: number) => `Ep ${n}`,
   },
   modal: {
     close: 'Close',

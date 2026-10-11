@@ -2,6 +2,7 @@
 // Reading public data only needs a client ID (X-MAL-CLIENT-ID header), no user login.
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { airings } from './anilist';
 
 const FIELDS = [
   'title', 'main_picture', 'alternative_titles', 'synopsis', 'mean', 'num_scoring_users', 'num_episodes',
@@ -26,6 +27,8 @@ export type Anime = {
   day: string | null; // "saturday", Japan time
   time: string | null; // "23:30", Japan time
   isNew: boolean; // starts this season (vs. continuing from an earlier one)
+  // exact episodes from AniList around build time: [episode, unix seconds]; null = AniList doesn't know the show
+  airings: [number, number][] | null;
   from: string | null; // premiere date: "2026-10-04", sometimes partial ("2026-10")
   studios: string[];
   genres: string[];
@@ -46,7 +49,7 @@ async function get(url: string) {
   return res.json();
 }
 
-const lean = (a: any, isNew: boolean): Anime => ({
+const lean = (a: any, isNew: boolean, airs: [number, number][] | null): Anime => ({
   url: `https://myanimelist.net/anime/${a.id}`,
   img: a.main_picture?.large ?? a.main_picture?.medium ?? '',
   title: a.title,
@@ -58,6 +61,7 @@ const lean = (a: any, isNew: boolean): Anime => ({
   day: a.broadcast?.day_of_the_week ?? null,
   time: a.broadcast?.start_time ?? null,
   isNew,
+  airings: airs,
   from: a.start_date ?? null,
   studios: (a.studios ?? []).map((s: any) => s.name),
   genres: (a.genres ?? []).filter((g: any) => MAIN_GENRES.has(g.id)).map((g: any) => g.name),
@@ -81,7 +85,12 @@ async function load() {
       !['movie', 'music'].includes(a.media_type) &&
       (a.status === 'currently_airing' || (a.status === 'not_yet_aired' && startsNow(a)))
   );
-  return { season, year, data: airing.map((a) => lean(a, startsNow(a))) };
+  // AniList is a nice-to-have: if it fails, /today falls back to MAL's weekly slot without episode numbers
+  const eps = await airings(airing.map((a) => a.id)).catch((err) => {
+    console.warn(`[anilist] ${err.message}; building without episode numbers`);
+    return new Map<number, [number, number][]>();
+  });
+  return { season, year, data: airing.map((a) => lean(a, startsNow(a), eps.get(a.id) ?? null)) };
 }
 
 type Season = Awaited<ReturnType<typeof load>>;
