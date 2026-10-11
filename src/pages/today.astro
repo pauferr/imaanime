@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Modal from '../components/Modal.astro';
 import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
 
 const season = await seasonNow();
@@ -13,7 +14,7 @@ const label = seasonLabel(season);
 
   <main class="today">
     {animes.map((a, i) => (
-      <a class="tcard" data-i={i} href={a.url} target="_blank" rel="noopener" hidden>
+      <button class="tcard" data-i={i} aria-haspopup="dialog" hidden>
         <div class="cover">
           <img src={a.images.webp.large_image_url} alt="" loading="lazy" width="450" height="640" />
           <span class="badge countdown"></span>
@@ -29,16 +30,19 @@ const label = seasonLabel(season);
           </p>
           <p class="tsyn">{a.synopsis}</p>
         </div>
-      </a>
+      </button>
     ))}
     <p class="empty" hidden>Hoy no se emite ningún anime de esta season.</p>
   </main>
+
+  <Modal />
 
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
     import type { Anime } from '../lib/jikan';
     import { airingToday, currentTz, timeIn } from '../lib/time';
+    import { openModal } from '../lib/modal';
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
     const list = document.querySelector('.today')!;
@@ -88,6 +92,10 @@ const label = seasonLabel(season);
       empty.hidden = shown.length > 0;
     }
 
+    list.addEventListener('click', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.tcard');
+      if (card) openModal(animes[Number(card.dataset.i)]);
+    });
     document.getElementById('tz')!.addEventListener('change', tick);
     tick();
     setInterval(tick, 1000);
@@ -110,6 +118,8 @@ const label = seasonLabel(season);
       padding: 0 16px 3rem;
     }
     .tcard {
+      all: unset;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       background: var(--surface);

@@ -1,0 +1,71 @@
+<!-- Se abre con openModal() de src/lib/modal.ts -->
+<dialog id="modal">
+  <button class="close" aria-label="Cerrar">✕</button>
+  <img data-f="img" alt="" />
+  <div class="info">
+    <h2 data-f="title"></h2>
+    <p class="alt" data-f="alt"></p>
+    <p class="meta">
+      <strong data-f="score"></strong> <span data-f="votes"></span>
+    </p>
+    <ul class="tags" data-f="genres"></ul>
+    <p data-f="synopsis"></p>
+    <dl>
+      <dt>Episodios</dt><dd data-f="episodes"></dd>
+      <dt>Estudio</dt><dd data-f="studios"></dd>
+      <dt>Emisión</dt><dd data-f="aired"></dd>
+      <dt>Horario</dt><dd data-f="broadcast"></dd>
+    </dl>
+    <a data-f="url" target="_blank" rel="noopener">Ver en MyAnimeList →</a>
+  </div>
+</dialog>
+
+<script>
+  const modal = document.getElementById('modal') as HTMLDialogElement;
+  modal.addEventListener('click', (e) => {
+    // click en el backdrop (fuera del contenido) o en ✕ cierra
+    const t = e.target as HTMLElement;
+    if (t === modal || t.closest('.close')) modal.close();
+  });
+</script>
+
+<!-- global: openModal() crea <li> por JS, que no llevarían el atributo de los estilos con scope -->
+<style is:global>
+  #modal {
+    width: min(860px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 0;
+    border: 0;
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 64px rgb(0 0 0 / 0.4);
+  }
+  #modal[open] { display: grid; grid-template-columns: 300px 1fr; animation: pop 0.25s ease; }
+  #modal::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(4px); }
+  #modal > img { width: 100%; height: 100%; object-fit: cover; }
+  #modal .info { padding: 1.5rem; overflow-y: auto; }
+  #modal h2 { margin: 0; font-size: 1.5rem; }
+  #modal .alt { margin: 0.2rem 0 0; color: var(--muted); }
+  #modal .meta strong { color: #eab308; font-size: 1.2rem; }
+  #modal .meta span { color: var(--muted); font-size: 0.85rem; }
+  #modal .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; list-style: none; }
+  #modal .tags li { padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--bg); font-size: 0.8rem; }
+  #modal dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.9rem; }
+  #modal dt { color: var(--muted); }
+  #modal dd { margin: 0; }
+  #modal .info a { color: var(--accent); font-weight: 600; }
+  #modal .close {
+    position: absolute; top: 10px; right: 10px;
+    width: 32px; height: 32px;
+    border: 0; border-radius: 50%;
+    background: rgb(0 0 0 / 0.5);
+    color: #fff;
+    cursor: pointer;
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(0.95); } }
+  @media (max-width: 640px) {
+    #modal[open] { grid-template-columns: 1fr; overflow-y: auto; }
+    #modal > img { max-height: 280px; }
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Modal from '../components/Modal.astro';
 import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
 
 const season = await seasonNow();
@@ -73,32 +74,14 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
     <p class="empty" hidden>Ningún anime coincide con los filtros.</p>
   </main>
 
-  <dialog id="modal">
-    <button class="close" aria-label="Cerrar">✕</button>
-    <img data-f="img" alt="" />
-    <div class="info">
-      <h2 data-f="title"></h2>
-      <p class="alt" data-f="alt"></p>
-      <p class="meta">
-        <strong data-f="score"></strong> <span data-f="votes"></span>
-      </p>
-      <ul class="tags" data-f="genres"></ul>
-      <p data-f="synopsis"></p>
-      <dl>
-        <dt>Episodios</dt><dd data-f="episodes"></dd>
-        <dt>Estudio</dt><dd data-f="studios"></dd>
-        <dt>Emisión</dt><dd data-f="aired"></dd>
-        <dt>Horario</dt><dd data-f="broadcast"></dd>
-      </dl>
-      <a data-f="url" target="_blank" rel="noopener">Ver en MyAnimeList →</a>
-    </div>
-  </dialog>
+  <Modal />
 
   <script type="application/json" id="animes" set:html={toJsonScript(animes)} />
 
   <script>
     import type { Anime } from '../lib/jikan';
     import { currentTz, localSlot } from '../lib/time';
+    import { openModal } from '../lib/modal';
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
     const toggle = document.getElementById('lang-en') as HTMLInputElement;
@@ -177,43 +160,13 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
       }
     });
 
-    // --- modal ---
-    // textContent, no innerHTML: los datos vienen de una API externa
-    const field = <T extends HTMLElement>(f: string) => modal.querySelector<T>(`[data-f="${f}"]`)!;
-    const set = (f: string, v: string | number) => (field(f).textContent = String(v));
-
     grid.addEventListener('click', (e) => {
       const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
-      if (!card) return;
-      const a = anime(card);
-      const en = toggle.checked && a.title_english;
-      field<HTMLImageElement>('img').src = a.images.webp.large_image_url;
-      set('title', en ? a.title_english! : a.title);
-      set('alt', en ? a.title : a.title_english ?? '');
-      set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
-      set('votes', a.scored_by ? `(${a.scored_by.toLocaleString('es')} votos en MAL)` : '');
-      set('synopsis', a.synopsis);
-      set('episodes', a.episodes ?? '?');
-      set('studios', a.studios.map((s) => s.name).join(', '));
-      set('aired', a.aired.string);
-      const slot = localSlot(a.broadcast, currentTz());
-      set('broadcast', slot ? `${slot.long} (tu hora) · ${a.broadcast.string}` : a.broadcast.string);
-      field<HTMLAnchorElement>('url').href = a.url;
-      field('genres').replaceChildren(
-        ...a.genres.map((g) => Object.assign(document.createElement('li'), { textContent: g.name }))
-      );
-      modal.showModal();
-    });
-
-    modal.addEventListener('click', (e) => {
-      // click en el backdrop (fuera del contenido) o en ✕ cierra
-      const t = e.target as HTMLElement;
-      if (t === modal || t.closest('.close')) modal.close();
+      if (card) openModal(anime(card));
     });
   </script>
 
-  <!-- global: el modal crea <li> por JS, que no llevarían el atributo de los estilos con scope -->
-  <style is:global>
+  <style>
     /* --- filtros --- */
     .filters {
       max-width: 1200px;
@@ -295,48 +248,11 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
       overflow: hidden;
     }
 
-    /* --- modal --- */
-    dialog {
-      width: min(860px, calc(100vw - 32px));
-      max-height: calc(100vh - 32px);
-      padding: 0;
-      border: 0;
-      border-radius: 16px;
-      background: var(--surface);
-      color: var(--text);
-      box-shadow: 0 24px 64px rgb(0 0 0 / 0.4);
-    }
-    dialog[open] { display: grid; grid-template-columns: 300px 1fr; animation: pop 0.25s ease; }
-    dialog::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(4px); }
-    dialog > img { width: 100%; height: 100%; object-fit: cover; }
-    .info { padding: 1.5rem; overflow-y: auto; }
-    .info h2 { margin: 0; font-size: 1.5rem; }
-    .alt { margin: 0.2rem 0 0; color: var(--muted); }
-    .meta strong { color: #eab308; font-size: 1.2rem; }
-    .meta span { color: var(--muted); font-size: 0.85rem; }
-    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; list-style: none; }
-    .tags li { padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--bg); font-size: 0.8rem; }
-    dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.9rem; }
-    dt { color: var(--muted); }
-    dd { margin: 0; }
-    .info a { color: var(--accent); font-weight: 600; }
-    .close {
-      position: absolute; top: 10px; right: 10px;
-      width: 32px; height: 32px;
-      border: 0; border-radius: 50%;
-      background: rgb(0 0 0 / 0.5);
-      color: #fff;
-      cursor: pointer;
-    }
-    @keyframes pop { from { opacity: 0; transform: scale(0.95); } }
-
     @media (max-width: 640px) {
       .grid { grid-template-columns: 1fr; }
       .card { grid-template-columns: 90px 1fr; height: 130px; }
       .syn { -webkit-line-clamp: 2; }
       .filters select { flex: 1; }
-      dialog[open] { grid-template-columns: 1fr; overflow-y: auto; }
-      dialog > img { max-height: 280px; }
     }
   </style>
 </Layout>
