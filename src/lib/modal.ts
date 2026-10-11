@@ -51,6 +51,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   const slot = localSlot(a, localTz(), locale);
   const original = jstSlot(a, locale) ?? ui[locale].unknown;
   set('broadcast', slot ? `${slot.long} ${t.yourTime} · ${original}` : original);
+  row('broadcast', a.format !== 'movie'); // a movie has a release date (Aired), not a weekly slot
   field<HTMLAnchorElement>('url').href = a.url;
   field('genres').replaceChildren(...a.genres.map((g) => Object.assign(document.createElement('li'), { textContent: g })));
 

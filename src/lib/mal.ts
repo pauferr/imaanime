@@ -96,13 +96,13 @@ async function load() {
     nodes.push(...json.data.map((d: any) => d.node));
     url = json.paging?.next;
   }
-  // Airing now: this season's shows (airing or about to premiere) plus continuing ones from earlier seasons.
-  // MAL's season list also includes finished shows, movies and music videos, which are dropped.
+  // Airing now: this season's shows (airing or about to premiere), continuing ones from earlier seasons,
+  // and this season's movies (released or upcoming). Finished shows and music videos are dropped.
   const startsNow = (a: any) => a.start_season?.year === year && a.start_season?.season === season;
-  const airing = nodes.filter(
-    (a) =>
-      !['movie', 'music'].includes(a.media_type) &&
-      (a.status === 'currently_airing' || (a.status === 'not_yet_aired' && startsNow(a)))
+  const airing = nodes.filter((a) =>
+    a.media_type === 'movie'
+      ? startsNow(a)
+      : a.media_type !== 'music' && (a.status === 'currently_airing' || (a.status === 'not_yet_aired' && startsNow(a)))
   );
   // AniList is a nice-to-have: if it fails, /today falls back to MAL's weekly slot without episode numbers
   const al = await anilistInfo(airing.map((a) => a.id)).catch((err) => {
