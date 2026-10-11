@@ -156,7 +156,7 @@ const tabs = [
     // defaults are left out of the URL
     const DEFAULTS: Record<string, string> = { show: 'all', sort: 'new' };
 
-    // ponytail: progressive display. Every card is already in the DOM (and in the JSON); only the first `limit`
+    // note: progressive display. Every card is already in the DOM (and in the JSON); only the first `limit`
     // matches are displayed and the rest wait behind [data-later]. Render from the JSON instead if this ever
     // grows to thousands of entries.
     const PAGE = 24; // fits the 2/3/4/6-column grids
@@ -203,7 +203,7 @@ const tabs = [
           (!q || names[Number(c.dataset.i)].includes(q)) &&
           (!day || c.dataset.day === day) &&
           (!types.length || types.includes(a.format)) && // types: OR (a show has one format)
-          picked.every((p) => a.genres.includes(p)); // ponytail: genres use AND logic (must have every selected one)
+          picked.every((p) => a.genres.includes(p)); // note: genres use AND logic (must have every selected one)
         c.hidden = !ok;
         n += +ok;
       }

@@ -53,7 +53,7 @@ async function get(url: string) {
   return res.json();
 }
 
-// ponytail: neither API has a season number, so guess it: "3rd Season" / "Season 3" / "II" in a title, or 1 for a
+// note: neither API has a season number, so guess it: "3rd Season" / "Season 3" / "II" in a title, or 1 for a
 // new show with no previous season. Arcs, "Part 2", remakes and long-running shows stay null ("E05" labels).
 const ROMAN: Record<string, number> = { II: 2, III: 3, IV: 4, V: 5, VI: 6 };
 function seasonNo(titles: (string | null)[], isNew: boolean, hasPrequel: boolean): number | null {
@@ -118,7 +118,7 @@ const DEV_CACHE = 'node_modules/.cache/imaanime/season-now.json';
 const DEV_CACHE_TTL = 6 * 3600e3; // same cadence as the production rebuild
 const FAILURE_TTL = 60e3;
 
-// ponytail: dev-only file cache so reloads and restarts don't wait on MAL; `astro build` always fetches fresh.
+// note: dev-only file cache so reloads and restarts don't wait on MAL; `astro build` always fetches fresh.
 // If MAL is unreachable, dev falls back to the last good response, however old.
 async function loadDev(): Promise<Season> {
   const cached = await stat(DEV_CACHE).then(

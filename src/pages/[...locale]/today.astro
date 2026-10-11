@@ -93,7 +93,7 @@ const label = seasonLabel(t, season);
     };
 
     let order = '';
-    // ponytail: recomputes everything every second; there are few cards. This also rolls over at midnight for free.
+    // note: recomputes everything every second; there are few cards. This also rolls over at midnight for free.
     function tick() {
       const tz = localTz();
       const now = new Date();

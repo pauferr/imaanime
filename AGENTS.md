@@ -80,8 +80,9 @@ The site ships in English only, but is structured for more locales:
 
 ## Conventions
 
+- Commits and PRs carry no co-author or tool attribution lines.
 - **English everywhere**: UI text, code comments, commits, PRs, issues, docs, and the repository description. The site is English-only for now (no i18n).
-- Simplest thing that works: native platform features before dependencies, no speculative abstractions. Deliberate shortcuts carry a `ponytail:` comment explaining their limits.
+- Simplest thing that works: native platform features before dependencies, no speculative abstractions. Deliberate shortcuts carry a `note:` comment explaining their limits.
 - External data is inserted with `textContent`, never `innerHTML`.
 - Basic accessibility: native interactive elements (`<button>`, `<dialog>`, `<select>`), `:focus-visible`, and `prefers-reduced-motion`.
 - Colors are CSS variables on `:root` using `light-dark()`, which follows the system theme. Page and modal transitions use native View Transitions and `@starting-style`.

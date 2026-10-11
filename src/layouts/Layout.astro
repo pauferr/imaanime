@@ -303,7 +303,7 @@ const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefi
         cursor: pointer;
       }
 
-      /* ponytail: title language only toggles CSS via :has(), zero JS to show/hide */
+      /* note: title language only toggles CSS via :has(), zero JS to show/hide */
       .en { display: none; }
       body:has(#titles-en:checked) .en { display: inline; }
       body:has(#titles-en:checked) .jp { display: none; }
