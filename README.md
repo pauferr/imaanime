@@ -8,7 +8,7 @@
 
 - **Browse the whole season**: every anime currently airing, with its cover art, a short synopsis, and its average MyAnimeList score.
 - **Search and filter**: find a show by name, or filter by genre and air day. Sort by newest, highest rated, or most popular.
-- **Original or English titles**: switch between Japanese and English titles with a single click.
+- **Original or English titles**: show titles in romaji (the original Japanese, in Latin letters) or in English, from Settings.
 - **See the full details**: click any anime to see the full synopsis, studio, episodes, genres, and air time.
 - **Air times in your time zone**: every broadcast is shown in your local time, automatically.
 - **Settings** (gear icon): title language, 24- or 12-hour clock, and time zone if you want something other than your device's.
