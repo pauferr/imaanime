@@ -5,7 +5,7 @@ import { seasonNow, seasonLabel, toJsonScript } from '../lib/jikan';
 
 const season = await seasonNow();
 // Qué se emite "hoy" depende de la zona horaria del usuario: se renderizan todos y el cliente filtra
-const animes = season.data.filter((a) => a.broadcast.day && a.broadcast.time);
+const animes = season.data.filter((a) => a.day && a.time);
 const label = seasonLabel(season);
 ---
 
@@ -14,15 +14,15 @@ const label = seasonLabel(season);
 
   <main class="today">
     {animes.map((a, i) => (
-      <button class="tcard" data-i={i} aria-haspopup="dialog" hidden>
+      <button class="card" data-i={i} aria-haspopup="dialog" hidden>
         <div class="cover">
-          <img src={a.images.webp.large_image_url} alt="" loading="lazy" width="450" height="640" />
+          <img src={a.img} alt="" loading="lazy" width="450" height="640" />
           <span class="badge countdown"></span>
         </div>
         <div class="tbody">
           <h3>
             <span class="jp">{a.title}</span>
-            <span class="en">{a.title_english ?? a.title}</span>
+            <span class="en">{a.titleEn ?? a.title}</span>
           </h3>
           <p class="tmeta">
             <span class="time"></span>
@@ -46,16 +46,15 @@ const label = seasonLabel(season);
 
     const animes: Anime[] = JSON.parse(document.getElementById('animes')!.textContent!);
     const list = document.querySelector('.today')!;
-    const cards = [...list.querySelectorAll<HTMLElement>('.tcard')];
+    const cards = [...list.querySelectorAll<HTMLElement>('.card')];
     const empty = list.querySelector<HTMLElement>('.empty')!;
     const title = document.getElementById('today-title')!;
 
-    const pad = (n: number) => String(n).padStart(2, '0');
-    function countdown(ms: number) {
+    const duration = new Intl.DurationFormat('es', { style: 'narrow' }); // "2h 5min 12s"
+    const countdown = (ms: number) => {
       const s = Math.floor(ms / 1000);
-      const h = Math.floor(s / 3600);
-      return `${h ? `${h}h ` : ''}${pad(Math.floor((s % 3600) / 60))}m ${pad(s % 60)}s`;
-    }
+      return duration.format({ hours: Math.floor(s / 3600), minutes: Math.floor((s % 3600) / 60), seconds: s % 60 });
+    };
 
     let order = '';
     // ponytail: recalcula todo cada segundo; son pocas cards. Así también cambia solo a medianoche.
@@ -67,10 +66,10 @@ const label = seasonLabel(season);
       const shown: { card: HTMLElement; at: number; aired: boolean }[] = [];
       for (const card of cards) {
         const a = animes[Number(card.dataset.i)];
-        const at = airingToday(a.broadcast, tz, now);
-        // fuera si no se emite hoy o si aún no se ha estrenado (aired.from es la fecha de estreno en Japón)
+        const at = airingToday(a, tz, now);
+        // fuera si no se emite hoy o si aún no se ha estrenado (from es la fecha de estreno en Japón)
         const jstDate = at && new Date(at.getTime() + 9 * 3600e3).toISOString().slice(0, 10);
-        const ok = !!at && (!a.aired.from || jstDate! >= a.aired.from.slice(0, 10));
+        const ok = !!at && (!a.from || jstDate! >= a.from.slice(0, 10));
         card.hidden = !ok;
         if (!ok) continue;
         const left = at!.getTime() - now.getTime();
@@ -93,7 +92,7 @@ const label = seasonLabel(season);
     }
 
     list.addEventListener('click', (e) => {
-      const card = (e.target as HTMLElement).closest<HTMLElement>('.tcard');
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
       if (card) openModal(animes[Number(card.dataset.i)]);
     });
     document.getElementById('tz')!.addEventListener('change', tick);
@@ -117,26 +116,11 @@ const label = seasonLabel(season);
       margin: 0 auto;
       padding: 0 16px 3rem;
     }
-    .tcard {
-      all: unset;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      background: var(--surface);
-      color: inherit;
-      text-decoration: none;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s;
-    }
-    .tcard:hover, .tcard:focus-visible { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-hover); }
-    .tcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .tcard.aired { opacity: 0.75; }
-    .tcard.aired:hover { opacity: 1; }
+    .card { display: flex; flex-direction: column; }
+    .card.aired { opacity: 0.75; }
+    .card.aired:hover { opacity: 1; }
     .cover { position: relative; overflow: hidden; }
-    .cover img { width: 100%; aspect-ratio: 45 / 64; object-fit: cover; display: block; transition: transform 0.4s ease; }
-    .tcard:hover .cover img { transform: scale(1.05); }
+    .cover img { aspect-ratio: 45 / 64; }
     .badge {
       position: absolute; left: 8px; bottom: 8px;
       padding: 0.3rem 0.6rem;

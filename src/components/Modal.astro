@@ -1,6 +1,7 @@
 <!-- Se abre con openModal() de src/lib/modal.ts -->
-<dialog id="modal">
-  <button class="close" aria-label="Cerrar">✕</button>
+<!-- closedby="any": cierra al pulsar fuera (nativo; Safari aún no, ahí cierran Esc y ✕) -->
+<dialog id="modal" closedby="any">
+  <form method="dialog"><button class="close" aria-label="Cerrar">✕</button></form>
   <img data-f="img" alt="" />
   <div class="info">
     <h2 data-f="title"></h2>
@@ -20,15 +21,6 @@
   </div>
 </dialog>
 
-<script>
-  const modal = document.getElementById('modal') as HTMLDialogElement;
-  modal.addEventListener('click', (e) => {
-    // click en el backdrop (fuera del contenido) o en ✕ cierra
-    const t = e.target as HTMLElement;
-    if (t === modal || t.closest('.close')) modal.close();
-  });
-</script>
-
 <!-- global: openModal() crea <li> por JS, que no llevarían el atributo de los estilos con scope -->
 <style is:global>
   #modal {
@@ -43,6 +35,7 @@
   }
   #modal[open] { display: grid; grid-template-columns: 300px 1fr; animation: pop 0.25s ease; }
   #modal::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(4px); }
+  #modal > form { display: contents; } /* el ✕ va posicionado; el form no ocupa celda del grid */
   #modal > img { width: 100%; height: 100%; object-fit: cover; }
   #modal .info { padding: 1.5rem; overflow-y: auto; }
   #modal h2 { margin: 0; font-size: 1.5rem; }

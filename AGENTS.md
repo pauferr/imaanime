@@ -24,18 +24,17 @@ src/
   pages/index.astro       listado de la season: buscador, filtros, orden, modal
   pages/today.astro       emisiones de hoy con cuenta atrás
   layouts/Layout.astro    <head>, cabecera común (menú, selector de zona, switch JP/EN), variables CSS y estilos base
-  components/Modal.astro  <dialog> de detalle (marcado, cierre y estilos)
-  lib/jikan.ts            descarga paginada de Jikan, simplificación de datos, caché en memoria
+  components/Modal.astro  <dialog> de detalle (marcado y estilos; cierre nativo con closedby="any")
+  lib/jikan.ts            descarga paginada de Jikan, tipo Anime (datos ya simplificados), caché en memoria
   lib/time.ts             zonas/países, conversión de la hora de Japón a la local, "¿se emite hoy?"
   lib/modal.ts            openModal(anime): rellena y abre el modal
-  data/season-now.json    datos de prueba con el mismo formato que Jikan
 .github/workflows/refresh.yml  recompila en Vercel cada 6 h
 ```
 
 ## Cómo funciona
 
-- **Datos al compilar**: `seasonNow()` descarga todas las páginas de Jikan (respeta su límite de 3 peticiones/s, reintenta si recibe un 429, elimina entradas repetidas y excluye el contenido para adultos) y se queda solo con los campos que usa la web. La página publicada es HTML estático: los visitantes nunca llaman a Jikan.
-- **Si Jikan falla**: en `dev` se usan los datos de prueba con un aviso en la consola; en `build` se lanza un error para no publicar datos falsos (Vercel mantiene el despliegue anterior).
+- **Datos al compilar**: `seasonNow()` descarga todas las páginas de Jikan (respeta su límite de 3 peticiones/s, reintenta si recibe un 429, elimina entradas repetidas y excluye el contenido para adultos) y la convierte a un objeto plano propio (`Anime`) con solo los campos que usa la web. La página publicada es HTML estático: los visitantes nunca llaman a Jikan.
+- **Si Jikan falla**: no hay datos de respaldo. En `dev` la página muestra el error (se reintenta en la siguiente recarga); en `build` falla y Vercel mantiene el despliegue anterior.
 - **Datos en el cliente**: cada página incrusta los animes en `<script type="application/json" id="animes">` mediante `toJsonScript()`, que escapa `<` para que los datos no puedan cerrar la etiqueta.
 - **Horarios**: Jikan da día y hora en JST (UTC+9, sin horario de verano). `lib/time.ts` los convierte a la zona del usuario. Horas como "25:30" (madrugada japonesa) se desbordan correctamente al día siguiente.
 - **"Hoy" depende del usuario**: `/today` renderiza todos los animes ocultos y el cliente muestra los que se emiten hoy en su zona, cada segundo (cuenta atrás, cambio a "Emitido", paso de medianoche).

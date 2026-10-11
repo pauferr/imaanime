@@ -1,11 +1,27 @@
 // Jikan v4 (API no oficial de MyAnimeList): https://docs.api.jikan.moe/
-import mock from '../data/season-now.json';
 
 const API = 'https://api.jikan.moe/v4/seasons/now';
 const MAX_PAGES = 10; // 25 por página; una season ronda 3–5 páginas
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export type Anime = (typeof mock.data)[number];
+// Solo lo que usa la web: va incrustado en el HTML de cada página
+export type Anime = {
+  url: string;
+  img: string;
+  title: string;
+  titleEn: string | null;
+  synopsis: string;
+  score: number | null;
+  votes: number | null;
+  episodes: number | null;
+  day: string | null; // "Saturdays", en hora de Japón
+  time: string | null; // "23:30", en hora de Japón
+  broadcast: string; // texto original, p. ej. "Saturdays at 23:30 (JST)"
+  from: string | null; // fecha de estreno ISO
+  aired: string; // texto original, p. ej. "Oct 4, 2026 to ?"
+  studios: string[];
+  genres: string[];
+};
 
 async function get(url: string, tries = 3): Promise<any> {
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
@@ -17,22 +33,22 @@ async function get(url: string, tries = 3): Promise<any> {
   return res.json();
 }
 
-// Solo los campos que usa la página: el JSON va embebido en el HTML para el modal
 const lean = (a: any): Anime => ({
-  mal_id: a.mal_id,
   url: a.url,
-  images: { webp: { large_image_url: a.images.webp.large_image_url } },
+  img: a.images.webp.large_image_url,
   title: a.title,
-  title_english: a.title_english,
+  titleEn: a.title_english,
   synopsis: (a.synopsis ?? 'Sin sinopsis.').replace(/\s*\[Written by MAL Rewrite\]\s*$/, ''),
   score: a.score,
-  scored_by: a.scored_by,
+  votes: a.scored_by,
   episodes: a.episodes,
-  status: a.status,
-  broadcast: { day: a.broadcast.day, time: a.broadcast.time, string: a.broadcast.string ?? 'Desconocido' },
-  aired: { from: a.aired.from, string: a.aired.string },
-  studios: a.studios.map((s: any) => ({ name: s.name })),
-  genres: a.genres.map((g: any) => ({ name: g.name })),
+  day: a.broadcast.day,
+  time: a.broadcast.time,
+  broadcast: a.broadcast.string ?? 'Desconocido',
+  from: a.aired.from,
+  aired: a.aired.string,
+  studios: a.studios.map((s: any) => s.name),
+  genres: a.genres.map((g: any) => g.name),
 });
 
 async function load() {
@@ -50,15 +66,10 @@ async function load() {
 
 let cache: ReturnType<typeof load> | undefined;
 
-// ponytail: caché en memoria del proceso; en `astro build` se llama una vez, en dev hasta reiniciar
+// ponytail: caché en memoria del proceso; en `astro build` se descarga una vez para las dos páginas, en dev hasta reiniciar
 export function seasonNow() {
   cache ??= load().catch((err) => {
-    cache = undefined;
-    // Jikan se cae a menudo: en dev seguimos con el mock; en build fallamos antes que publicar datos falsos
-    if (import.meta.env.DEV) {
-      console.warn(`[jikan] ${err.message} — usando datos mock`);
-      return mock;
-    }
+    cache = undefined; // reintentar en la siguiente petición
     throw err;
   });
   return cache;

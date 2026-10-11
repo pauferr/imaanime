@@ -7,13 +7,11 @@ const season = await seasonNow();
 const animes = season.data;
 const label = seasonLabel(season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
-const genres = [...new Set(animes.flatMap((a) => a.genres.map((g) => g.name)))].sort();
+const genres = [...new Set(animes.flatMap((a) => a.genres))].sort();
 const DAYS: Record<string, string> = {
   Mondays: 'Lunes', Tuesdays: 'Martes', Wednesdays: 'Miércoles', Thursdays: 'Jueves',
   Fridays: 'Viernes', Saturdays: 'Sábado', Sundays: 'Domingo',
 };
-// minúsculas y sin acentos, igual que la búsqueda en cliente
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 ---
 
 <Layout title={`Ima Anime · ${label}`} description={`Animes en emisión: ${label}`} subtitle={`En emisión · ${label}`}>
@@ -45,26 +43,16 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
 
   <main class="grid">
     {animes.map((a, i) => (
-      <button
-        class="card"
-        data-i={i}
-        data-name={norm(`${a.title} ${a.title_english ?? ''}`)}
-        data-genres={a.genres.map((g) => g.name).join('|')}
-        data-day={a.broadcast.day}
-        data-from={a.aired.from ?? ''}
-        data-score={a.score ?? 0}
-        data-votes={a.scored_by ?? 0}
-        aria-haspopup="dialog"
-      >
-        <img src={a.images.webp.large_image_url} alt="" loading="lazy" width="450" height="640" />
+      <button class="card" data-i={i} aria-haspopup="dialog">
+        <img src={a.img} alt="" loading="lazy" width="450" height="640" />
         <div class="body">
           <h2>
             <span class="jp">{a.title}</span>
-            <span class="en">{a.title_english ?? a.title}</span>
+            <span class="en">{a.titleEn ?? a.title}</span>
           </h2>
           <p class="meta-line">
             <span class="score">★ {score(a.score)}</span>
-            <span class="when">{DAYS[a.broadcast.day] ?? '?'}</span>
+            <span class="when">{DAYS[a.day ?? ''] ?? '?'}</span>
             <span>{a.episodes ?? '?'} eps</span>
           </p>
           <p class="syn">{a.synopsis}</p>
@@ -92,10 +80,12 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
     const grid = document.querySelector('.grid')!;
     const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
     const anime = (c: HTMLElement) => animes[Number(c.dataset.i)];
+    // minúsculas y sin acentos, para buscar "kimetsu" y encontrar "Kimétsu"
     const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const names = animes.map((a) => norm(`${a.title} ${a.titleEn ?? ''}`));
     const shownName = (c: HTMLElement) => {
       const a = anime(c);
-      return toggle.checked ? a.title_english ?? a.title : a.title;
+      return toggle.checked ? a.titleEn ?? a.title : a.title;
     };
 
     function apply() {
@@ -106,17 +96,18 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
       const sort = f.get('sort') as 'new' | 'score' | 'votes' | 'name';
       let n = 0;
       for (const c of cards) {
-        const g = c.dataset.genres!.split('|');
+        const a = anime(c);
         // ponytail: géneros con lógica Y (debe tener todos los marcados)
-        const ok = (!q || c.dataset.name!.includes(q)) && (!day || c.dataset.day === day) && picked.every((p) => g.includes(p));
+        const ok = (!q || names[Number(c.dataset.i)].includes(q)) && (!day || c.dataset.day === day) && picked.every((p) => a.genres.includes(p));
         c.hidden = !ok;
         n += +ok;
       }
+      type C = HTMLElement;
       const by = {
-        new: (a: HTMLElement, b: HTMLElement) => b.dataset.from!.localeCompare(a.dataset.from!), // ISO: ordena bien como texto; sin fecha al final
-        score: (a: HTMLElement, b: HTMLElement) => +b.dataset.score! - +a.dataset.score!,
-        votes: (a: HTMLElement, b: HTMLElement) => +b.dataset.votes! - +a.dataset.votes!,
-        name: (a: HTMLElement, b: HTMLElement) => shownName(a).localeCompare(shownName(b), 'es'),
+        new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO: ordena bien como texto; sin fecha al final
+        score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
+        votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
+        name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), 'es'),
       }[sort];
       grid.prepend(...cards.sort(by));
       document.getElementById('count')!.textContent = `${n} de ${cards.length} animes`;
@@ -131,15 +122,13 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
 
     // restaurar filtros desde la URL
     const params = new URLSearchParams(location.search);
-    (form.elements.namedItem('q') as HTMLInputElement).value = params.get('q') ?? '';
-    (form.elements.namedItem('day') as HTMLSelectElement).value = params.get('day') ?? '';
-    (form.elements.namedItem('sort') as HTMLSelectElement).value = params.get('sort') ?? 'new';
-    for (const cb of form.querySelectorAll<HTMLInputElement>('[name=genre]')) cb.checked = params.getAll('genre').includes(cb.value);
+    for (const el of form.querySelectorAll<HTMLInputElement>('[name]'))
+      el.type === 'checkbox' ? (el.checked = params.getAll(el.name).includes(el.value)) : (el.value = params.get(el.name) ?? el.value);
 
     // horarios y día del filtro en la zona horaria elegida
     function renderTz() {
       for (const c of cards) {
-        const slot = localSlot(anime(c).broadcast, currentTz());
+        const slot = localSlot(anime(c), currentTz());
         c.dataset.day = slot?.day ?? '';
         c.querySelector('.when')!.textContent = slot?.short ?? '?';
       }
@@ -212,22 +201,8 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').to
       margin: 0 auto;
       padding: 0 16px 3rem;
     }
-    .card {
-      all: unset;
-      display: grid;
-      grid-template-columns: 105px 1fr;
-      height: 150px;
-      background: var(--surface);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card:hover, .card:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
-    .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
-    .card:hover img { transform: scale(1.06); }
+    .card { display: grid; grid-template-columns: 105px 1fr; height: 150px; }
+    .card img { height: 100%; }
     .body { padding: 0.7rem 0.85rem; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
     .body h2 {
       margin: 0;
