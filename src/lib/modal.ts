@@ -2,6 +2,7 @@
 import type { Anime } from './mal';
 import { clock, formatDate, jstSlot, localSlot, localTz } from './time';
 import type { Related } from './anilist';
+import { track } from './track';
 
 // "S03E05" for episodes; specials and movies are a single release, so their format name instead
 export const episodeLabel = (a: Anime, ep: number, locale: Locale) =>
@@ -53,6 +54,9 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('broadcast', slot ? `${slot.long} ${t.yourTime} · ${original}` : original);
   row('broadcast', a.format !== 'movie'); // a movie has a release date (Aired), not a weekly slot
   field<HTMLAnchorElement>('url').href = a.url;
+  // analytics: the opened anime, and its title on the outbound MAL links (read by Umami on click)
+  track('open-anime', { title: a.title, page: location.pathname });
+  for (const f of ['url', 'prequel', 'sequel']) field(f).dataset.umamiEventTitle = a.title;
   field('genres').replaceChildren(...a.genres.map((g) => Object.assign(document.createElement('li'), { textContent: g })));
 
   if (!cover || !document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {

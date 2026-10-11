@@ -133,6 +133,7 @@ const tabs = [
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
     import { sheet } from '../../lib/sheet';
+    import { track } from '../../lib/track';
 
     const locale = pageLocale();
     const t = ui[locale];
@@ -258,6 +259,17 @@ const tabs = [
     }
     document.addEventListener('settings-change', renderTz); // title language (A–Z order), time zone and format
     form.addEventListener('input', restart);
+    // analytics: tab, sort and filter choices (a checkbox reports the value it was set to or "-value" when cleared)
+    form.addEventListener('change', (e) => {
+      const { name, value, type, checked } = e.target as HTMLInputElement;
+      if (name && name !== 'q') track('filter', { field: name, value: type === 'checkbox' && !checked ? `-${value}` : value });
+    });
+    // a search counts once the user stops typing; the query text is never sent
+    let searchTimer = 0;
+    form.elements.namedItem('q')!.addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      if ((e.target as HTMLInputElement).value.trim()) searchTimer = window.setTimeout(() => track('search', { page: '/' }), 1500);
+    });
     sheet(document.getElementById('filters-panel')!);
     addEventListener('popstate', apply); // closing a sheet goes back one history entry: rewrite the URL from the form
     renderTz();

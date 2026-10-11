@@ -13,6 +13,8 @@ const home = localeUrl(locale);
 const today = localeUrl(locale, 'today');
 const trim = (p: string) => p.replace(/\/$/, '');
 const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'page' : undefined);
+// Umami analytics: production builds only, and only where the website ID is configured (forks don't report here)
+const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefined;
 ---
 
 <html lang={locale}>
@@ -22,6 +24,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {umamiId && <script is:inline defer src="https://cloud.umami.is/script.js" data-website-id={umamiId} data-domains="imaanime.vercel.app"></script>}
   </head>
   <body>
     <header>
@@ -72,6 +75,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
     <script>
       import { browserTz, pref } from '../lib/time';
       import { sheet } from '../lib/sheet';
+      import { track } from '../lib/track';
 
       // Settings: title language (independent of the UI locale), time format and time zone.
       // Pages read them through #titles-en and lib/time.ts (clock(), localTz()).
@@ -108,7 +112,10 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         if (!('command' in HTMLButtonElement.prototype)) dialog.showModal();
       });
 
-      form.addEventListener('change', () => {
+      form.addEventListener('change', (e) => {
+        // analytics: which setting changed; the time zone itself isn't sent, only automatic vs. custom
+        const { name, value } = e.target as HTMLInputElement;
+        track('settings', { [name]: name === 'tz' ? (value ? 'custom' : 'auto') : value });
         const data = new FormData(form);
         save('titles', data.get('titles') === 'en' ? 'en' : '');
         save('clock', data.get('clock') === '12' ? '12' : '');

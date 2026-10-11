@@ -10,13 +10,12 @@ Technical guide to Ima Anime for anyone working on the code, human or agent. The
 
 ## Setup
 
-Create a client ID at https://myanimelist.net/apiconfig (any app type; no OAuth needed for public data) and put it in `.env` (gitignored):
+Copy `.env.example` to `.env` (gitignored) and fill it in:
 
-```sh
-MAL_CLIENT_ID=your-client-id
-```
+- `MAL_CLIENT_ID` (required): create one at https://myanimelist.net/apiconfig (any app type; no OAuth needed for public data).
+- `UMAMI_WEBSITE_ID` (optional): Umami Cloud website ID. Analytics only load in production builds where it's set, so forks and `npm run dev` never report anything.
 
-On Vercel, add the same `MAL_CLIENT_ID` as a project environment variable.
+On Vercel, add the same variables as project environment variables.
 
 ## Commands
 
@@ -72,6 +71,12 @@ The site ships in English only, but is structured for more locales:
 - **Data stays as MAL provides it**: titles, synopses and genres come from MyAnimeList in English and are not translated. Only MAL's main genres are kept (`MAIN_GENRES` in `lib/mal.ts`); themes, demographics and explicit tags are dropped.
 
 **To add a language**: add a dictionary to `ui` in `src/i18n.ts` (typed as `Dict`, so TypeScript flags any missing key). Nothing else is required. A language picker in the header and `hreflang` links are not built yet; add them together with the second language.
+
+## Analytics (Umami)
+
+- `Layout.astro` adds Umami Cloud's script (`data-domains="imaanime.vercel.app"`, so previews don't count) only when `UMAMI_WEBSITE_ID` is set and it's a production build. Pageviews are automatic.
+- Custom events go through `track()` in `src/lib/track.ts`, a no-op when Umami isn't loaded: `open-anime` `{ title, page }`, `filter` `{ field, value }` (unchecked checkbox → `-value`), `search` `{ page }` after 1.5 s idle (never the query text), `settings` `{ titles | clock | tz: auto/custom }` (never the actual zone). MAL links (anime, prequel, sequel) use Umami's `data-umami-event="mal-link"` attributes; `openModal()` sets their title.
+- Never send free text or personal data.
 
 ## Conventions
 

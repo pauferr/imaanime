@@ -25,10 +25,11 @@ const { t } = Astro.props as { t: Dict['modal'] };
       <div data-row="broadcast"><dt>{t.broadcast}</dt><dd data-f="broadcast"></dd></div>
       <dt>{t.aired}</dt><dd data-f="aired"></dd>
       <dt>{t.studio}</dt><dd data-f="studios"></dd>
-      <div data-row="prequel"><dt>{t.prequel}</dt><dd><a data-f="prequel" target="_blank" rel="noopener"></a></dd></div>
-      <div data-row="sequel"><dt>{t.sequel}</dt><dd><a data-f="sequel" target="_blank" rel="noopener"></a></dd></div>
+      <div data-row="prequel"><dt>{t.prequel}</dt><dd><a data-f="prequel" target="_blank" rel="noopener" data-umami-event="mal-link" data-umami-event-link="prequel"></a></dd></div>
+      <div data-row="sequel"><dt>{t.sequel}</dt><dd><a data-f="sequel" target="_blank" rel="noopener" data-umami-event="mal-link" data-umami-event-link="sequel"></a></dd></div>
     </dl>
-    <a data-f="url" target="_blank" rel="noopener">{t.viewOnMal}</a>
+    <!-- data-umami-event*: Umami tracks these clicks itself; openModal() fills in the title -->
+    <a data-f="url" target="_blank" rel="noopener" data-umami-event="mal-link" data-umami-event-link="anime">{t.viewOnMal}</a>
   </div>
 </dialog>
 

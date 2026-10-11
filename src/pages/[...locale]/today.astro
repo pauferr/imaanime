@@ -69,6 +69,7 @@ const label = seasonLabel(t, season);
     import { localTz, timeIn, todaysEpisode } from '../../lib/time';
     import { episodeLabel, openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
+    import { track } from '../../lib/track';
 
     const locale = pageLocale();
     const t = ui[locale].today;
@@ -141,6 +142,12 @@ const label = seasonLabel(t, season);
       if (card) openModal(animes[Number(card.dataset.i)], card.querySelector('img')!);
     });
     search.addEventListener('input', tick);
+    // analytics: a search counts once the user stops typing; the query text is never sent
+    let searchTimer = 0;
+    search.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      if (search.value.trim()) searchTimer = window.setTimeout(() => track('search', { page: '/today' }), 1500);
+    });
     document.addEventListener('settings-change', tick);
     // "/" focuses the search box, as on /
     document.addEventListener('keydown', (e) => {
