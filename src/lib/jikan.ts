@@ -1,4 +1,6 @@
 // Jikan v4 (unofficial MyAnimeList API): https://docs.api.jikan.moe/
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 
 const API = 'https://api.jikan.moe/v4/seasons/now';
 const MAX_PAGES = 10; // 25 per page; a season is usually 3–5 pages
@@ -64,12 +66,39 @@ async function load() {
   return { season: first?.season ?? '', year: first?.year ?? '', data: all.map(lean) };
 }
 
-let cache: ReturnType<typeof load> | undefined;
+type Season = Awaited<ReturnType<typeof load>>;
 
-// ponytail: in-process memory cache; `astro build` fetches once for both pages, dev keeps it until restart
+const DEV_CACHE = 'node_modules/.cache/imaanime/season-now.json';
+const DEV_CACHE_TTL = 6 * 3600e3; // same cadence as the production rebuild
+const FAILURE_TTL = 60e3;
+
+// ponytail: dev-only file cache so reloads and restarts don't wait on Jikan; `astro build` always fetches fresh.
+// If Jikan is down, dev falls back to the last good response, however old.
+async function loadDev(): Promise<Season> {
+  const cached = await stat(DEV_CACHE).then(
+    async (s) => ({ age: Date.now() - s.mtimeMs, data: JSON.parse(await readFile(DEV_CACHE, 'utf8')) as Season }),
+    () => null
+  );
+  if (cached && cached.age < DEV_CACHE_TTL) return cached.data;
+  try {
+    const fresh = await load();
+    await mkdir(dirname(DEV_CACHE), { recursive: true });
+    await writeFile(DEV_CACHE, JSON.stringify(fresh));
+    return fresh;
+  } catch (err) {
+    if (!cached) throw err;
+    console.warn(`[jikan] ${(err as Error).message}; using cached data from ${Math.round(cached.age / 3600e3)} h ago`);
+    return cached.data;
+  }
+}
+
+let cache: Promise<Season> | undefined;
+
+// In-process memory cache: `astro build` fetches once for both pages, dev keeps it until restart
 export function seasonNow() {
-  cache ??= load().catch((err) => {
-    cache = undefined; // retry on the next request
+  cache ??= (import.meta.env.DEV ? loadDev() : load()).catch((err) => {
+    // remember the failure briefly: reloads fail fast instead of each waiting for Jikan's timeout
+    setTimeout(() => (cache = undefined), FAILURE_TTL).unref();
     throw err;
   });
   return cache;
