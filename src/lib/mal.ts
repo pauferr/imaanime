@@ -26,9 +26,11 @@ export type Anime = {
   episodes: number | null;
   day: string | null; // "saturday", Japan time
   time: string | null; // "23:30", Japan time
+  format: string; // MAL media_type: tv, ona, tv_special, ova, special, movie…
   isNew: boolean; // starts this season (vs. continuing from an earlier one)
   // exact episodes from AniList around build time: [episode, unix seconds]; null = AniList doesn't know the show
   airings: [number, number][] | null;
+  seasonNo: number | null; // franchise season, for "S03E05" labels; null when unclear
   prequel: Related | null; // previous / next season, from AniList
   sequel: Related | null;
   from: string | null; // premiere date: "2026-10-04", sometimes partial ("2026-10")
@@ -51,6 +53,17 @@ async function get(url: string) {
   return res.json();
 }
 
+// ponytail: neither API has a season number, so guess it: "3rd Season" / "Season 3" / "II" in a title, or 1 for a
+// new show with no previous season. Arcs, "Part 2", remakes and long-running shows stay null ("E05" labels).
+const ROMAN: Record<string, number> = { II: 2, III: 3, IV: 4, V: 5, VI: 6 };
+function seasonNo(titles: (string | null)[], isNew: boolean, hasPrequel: boolean): number | null {
+  for (const t of titles) {
+    const m = t?.match(/(\d+)(?:st|nd|rd|th) Season|Season (\d+)|\s(II|III|IV|V|VI)$/i);
+    if (m) return Number(m[1] ?? m[2]) || ROMAN[m[3].toUpperCase()];
+  }
+  return isNew && !hasPrequel ? 1 : null;
+}
+
 const lean = (a: any, isNew: boolean, al: AniListInfo | undefined): Anime => ({
   url: `https://myanimelist.net/anime/${a.id}`,
   img: a.main_picture?.large ?? a.main_picture?.medium ?? '',
@@ -62,8 +75,10 @@ const lean = (a: any, isNew: boolean, al: AniListInfo | undefined): Anime => ({
   episodes: a.num_episodes || null, // MAL uses 0 for "unknown"
   day: a.broadcast?.day_of_the_week ?? null,
   time: a.broadcast?.start_time ?? null,
+  format: a.media_type ?? 'tv',
   isNew,
   airings: al?.airings ?? null,
+  seasonNo: seasonNo([a.title, a.alternative_titles?.en], isNew, !!al?.prequel),
   prequel: al?.prequel ?? null,
   sequel: al?.sequel ?? null,
   from: a.start_date ?? null,

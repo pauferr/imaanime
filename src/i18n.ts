@@ -34,11 +34,14 @@ const en = {
     heading: (date: string) => `Today, ${date}`,
     empty: 'No anime from this season airs today.',
     aired: '✓ Aired',
-    episode: (n: number) => `Ep ${n}`,
+    // "S03E05" when the season is known, "E05" otherwise
+    episode: (n: number, season?: number | null) =>
+      `${season ? `S${String(season).padStart(2, '0')}` : ''}E${String(n).padStart(2, '0')}`,
   },
   modal: {
     close: 'Close',
     episodes: 'Episodes',
+    format: 'Format',
     episodesOf: (aired: number, total: number | string) => `${aired} of ${total}`,
     next: 'Next episode',
     prequel: 'Previous season',
@@ -49,6 +52,11 @@ const en = {
     viewOnMal: 'View on MyAnimeList →',
     votes: (n: string) => `(${n} votes on MAL)`,
     yourTime: '(your time)',
+  },
+  // format of the release (MAL media_type): short card tag (none for regular TV series) and modal label
+  formats: {
+    tag: { ona: 'ONA', ova: 'OVA', tv_special: 'Special', special: 'Special', movie: 'Movie', tv: '', tv_short: '' } as Record<string, string>,
+    name: { tv: 'TV series', tv_short: 'TV short', ona: 'Web series (ONA)', ova: 'OVA', tv_special: 'TV special', special: 'Special', movie: 'Movie' } as Record<string, string>,
   },
   // card tags: shows that start this season vs. ones that started in an earlier season
   isNew: 'New',

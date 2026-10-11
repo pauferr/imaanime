@@ -29,7 +29,10 @@ const label = seasonLabel(t, season);
             <span class="badge countdown"></span>
             <span class="badge ep" hidden></span>
           </div>
-          {a.isNew ? <span class="tag new">{t.isNew}</span> : <span class="tag">{t.continuing}</span>}
+          <div class="cover-tags">
+            {a.isNew ? <span class="tag new">{t.isNew}</span> : <span class="tag">{t.continuing}</span>}
+            {t.formats.tag[a.format] && <span class="tag format">{t.formats.tag[a.format]}</span>}
+          </div>
         </div>
         <div class="tbody">
           <h3>
@@ -54,7 +57,7 @@ const label = seasonLabel(t, season);
   <script>
     import type { Anime } from '../../lib/mal';
     import { airingToday, dateIn, localTz, timeIn } from '../../lib/time';
-    import { openModal } from '../../lib/modal';
+    import { episodeLabel, openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
     const locale = pageLocale();
@@ -108,7 +111,7 @@ const label = seasonLabel(t, season);
         const at = today!.at;
         const ep = card.querySelector<HTMLElement>('.ep')!;
         ep.hidden = today!.ep == null;
-        ep.textContent = today!.ep == null ? '' : t.episode(today!.ep);
+        ep.textContent = today!.ep == null ? '' : episodeLabel(animes[i], today!.ep, locale);
         const left = at.getTime() - now.getTime();
         const aired = left <= 0;
         card.classList.toggle('aired', aired);

@@ -2,7 +2,11 @@
 import type { Anime } from './mal';
 import { formatDate, jstSlot, localSlot, localTz } from './time';
 import type { Related } from './anilist';
-import { pageLocale, ui } from '../i18n';
+
+// "S03E05" for episodes; specials and movies are a single release, so their format name instead
+export const episodeLabel = (a: Anime, ep: number, locale: Locale) =>
+  ['tv', 'tv_short', 'ona'].includes(a.format) ? ui[locale].today.episode(ep, a.seasonNo) : ui[locale].formats.tag[a.format] || ui[locale].today.episode(ep);
+import { pageLocale, ui, type Locale } from '../i18n';
 
 // `cover`: the clicked card's image, which morphs into the modal image (View Transitions API)
 export function openModal(a: Anime, cover?: HTMLImageElement) {
@@ -22,6 +26,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
   set('score', a.score == null ? '★ N/A' : `★ ${a.score.toFixed(2)}`);
   set('votes', a.votes ? t.votes(a.votes.toLocaleString(locale)) : '');
   set('synopsis', a.synopsis ?? ui[locale].noSynopsis);
+  set('format', ui[locale].formats.name[a.format] ?? a.format);
   // AniList schedule: the next episode, and how many have aired (the one before it)
   const now = Date.now() / 1000;
   const next = a.airings?.find(([, at]) => at > now);
@@ -32,7 +37,7 @@ export function openModal(a: Anime, cover?: HTMLImageElement) {
     const when = new Date(next[1] * 1000).toLocaleString(locale, {
       weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: localTz(),
     });
-    set('next', `${ui[locale].today.episode(next[0])} · ${when}`);
+    set('next', `${episodeLabel(a, next[0], locale)} · ${when}`);
   }
   for (const [key, rel] of [['prequel', a.prequel], ['sequel', a.sequel]] as [string, Related | null][]) {
     row(key, !!rel);

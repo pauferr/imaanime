@@ -18,6 +18,7 @@ const { t } = Astro.props as { t: Dict['modal'] };
     <p data-f="synopsis"></p>
     <!-- rows wrapped in <div> can be hidden as a whole when there is no data -->
     <dl>
+      <dt>{t.format}</dt><dd data-f="format"></dd>
       <dt>{t.episodes}</dt><dd data-f="episodes"></dd>
       <div data-row="next"><dt>{t.next}</dt><dd data-f="next"></dd></div>
       <dt>{t.broadcast}</dt><dd data-f="broadcast"></dd>
