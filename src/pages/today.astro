@@ -93,7 +93,7 @@ const label = seasonLabel(season);
 
     list.addEventListener('click', (e) => {
       const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
-      if (card) openModal(animes[Number(card.dataset.i)]);
+      if (card) openModal(animes[Number(card.dataset.i)], card.querySelector('img')!);
     });
     document.getElementById('tz')!.addEventListener('change', tick);
     tick();

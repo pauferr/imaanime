@@ -151,7 +151,7 @@ const DAYS: Record<string, string> = {
 
     grid.addEventListener('click', (e) => {
       const card = (e.target as HTMLElement).closest<HTMLElement>('.card');
-      if (card) openModal(anime(card));
+      if (card) openModal(anime(card), card.querySelector('img')!);
     });
   </script>
 
