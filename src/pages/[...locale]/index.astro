@@ -13,6 +13,7 @@ const season = await seasonNow();
 const animes = season.data;
 const label = seasonLabel(t, season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
+const compact = new Intl.NumberFormat(locale, { notation: 'compact' }); // 10426 → "10K"
 const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
 
 // most common genres first: the long tail (many with 1–2 shows) ends up at the bottom of the panel
@@ -70,12 +71,27 @@ const tabs = [
     <p class="status" id="count" hidden></p>
   </form>
 
+  <!-- icon defined once, reused by every card through <use> -->
+  <svg hidden>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </symbol>
+  </svg>
+
   <main class="grid">
     {animes.map((a, i) => (
       <button class="card" data-i={i} aria-haspopup="dialog">
         <div class="cover">
           <img src={a.img} alt="" loading="lazy" width="450" height="640" />
-          <span class="badge score">★ {score(a.score)}</span>
+          <div class="badges">
+            <span class="badge score">★ {score(a.score)}</span>
+            {a.votes && (
+              <span class="badge" title={t.index.voters(a.votes.toLocaleString(locale))}>
+                <svg aria-hidden="true"><use href="#i-users" /></svg>{compact.format(a.votes)}
+              </span>
+            )}
+          </div>
           {!a.isNew && <span class="tag">{t.continuing}</span>}
         </div>
         <h2>

@@ -184,6 +184,10 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
         font-variant-numeric: tabular-nums;
       }
       .badge.score { color: #facc15; }
+      /* several badges side by side (score + voters on /) */
+      .badges { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px; }
+      .badges .badge { position: static; display: flex; align-items: center; gap: 0.25rem; }
+      .badge svg { width: 0.85em; height: 0.85em; }
       .tag {
         position: absolute; left: 8px; top: 8px;
         padding: 0.15rem 0.45rem;
