@@ -61,7 +61,10 @@ const tabs = [
     </div>
 
     <!-- native popover: closes on outside click and Esc; anchored under the button where CSS anchor positioning exists -->
-    <div id="filters-panel" popover>
+    <div id="filters-panel" class="sheet" popover>
+      <div class="sheet-bar">
+        <button type="button" class="close" popovertarget="filters-panel" popovertargetaction="hide" aria-label={t.modal.close}>✕</button>
+      </div>
       <fieldset class="chips">
         <legend>{t.index.day}</legend>
         <label><input type="radio" name="day" value="" checked /><span>{t.index.anyDay}</span></label>
@@ -127,6 +130,7 @@ const tabs = [
     import { localSlot, localTz, newestFirst, todaysEpisode } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
+    import { sheet } from '../../lib/sheet';
 
     const locale = pageLocale();
     const t = ui[locale];
@@ -222,6 +226,8 @@ const tabs = [
     }
     document.addEventListener('settings-change', renderTz); // title language (A–Z order), time zone and format
     form.addEventListener('input', apply);
+    sheet(document.getElementById('filters-panel')!);
+    addEventListener('popstate', apply); // closing a sheet goes back one history entry: rewrite the URL from the form
     renderTz();
 
     // "/" focuses the search box

@@ -42,8 +42,9 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
     </header>
 
     <!-- settings: applied and saved as soon as they change; pages listen for "settings-change" on document -->
-    <dialog id="settings" closedby="any" aria-labelledby="settings-title">
+    <dialog id="settings" class="sheet" closedby="any" aria-labelledby="settings-title">
       <form method="dialog">
+        <div class="sheet-bar"><button class="close" aria-label={t.modal.close}>✕</button></div>
         <h2 id="settings-title">{t.settings.title}</h2>
         <fieldset>
           <legend>{t.titles.label}</legend>
@@ -70,10 +71,12 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
     <!-- placed before the content: page scripts read #titles-en already initialized -->
     <script>
       import { browserTz, pref } from '../lib/time';
+      import { sheet } from '../lib/sheet';
 
       // Settings: title language (independent of the UI locale), time format and time zone.
       // Pages read them through #titles-en and lib/time.ts (clock(), localTz()).
       const dialog = document.getElementById('settings') as HTMLDialogElement;
+      sheet(dialog);
       const form = dialog.querySelector('form')!;
       const tz = form.elements.namedItem('tz') as HTMLSelectElement;
       const save = (key: string, value: string) => {
@@ -192,6 +195,66 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       .segmented small { font-weight: 500; opacity: 0.7; }
       .segmented input:checked + span { background: var(--accent); color: #fff; }
       .segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+      /* --- overlays (.sheet): detail modal, settings, filters panel --- */
+      /* top bar: on desktop only its ✕ shows, in the corner; on phones it's a sticky bar with a drag handle */
+      .sheet-bar { display: contents; }
+      .sheet .close {
+        position: absolute; top: 10px; right: 10px; z-index: 2;
+        width: 32px; height: 32px;
+        border: 0; border-radius: 50%;
+        background: rgb(0 0 0 / 0.5);
+        color: #fff;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      .sheet .close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      /* phones: bottom sheets — pinned to the bottom, full width, one scroll, slide up/down, ✕ always reachable */
+      @media (max-width: 640px) {
+        :root :is(#modal, #settings, #filters-panel).sheet {
+          position: fixed;
+          inset: auto 0 0 0;
+          width: 100%;
+          max-width: none;
+          max-height: 92dvh;
+          margin: 0;
+          padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
+          border: 0;
+          border-radius: 18px 18px 0 0;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          opacity: 1;
+          scale: 1;
+          translate: 0 100%;
+          transition: translate 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), overlay 0.28s allow-discrete, display 0.28s allow-discrete;
+        }
+        :root :is(#modal, #settings, #filters-panel).sheet:is([open], :popover-open) { translate: 0 0; }
+        @starting-style {
+          :root :is(#modal, #settings, #filters-panel).sheet:is([open], :popover-open) { translate: 0 100%; opacity: 1; scale: 1; }
+        }
+        .sheet-bar {
+          display: block;
+          position: sticky; top: 0; z-index: 1;
+          grid-column: 1 / -1;
+          height: 44px;
+          margin: 0 -1rem;
+          background: var(--sheet-bg, var(--surface));
+          touch-action: none;
+          cursor: grab;
+        }
+        .sheet-bar::before {
+          content: '';
+          position: absolute; left: 50%; top: 10px;
+          width: 40px; height: 5px;
+          translate: -50% 0;
+          border-radius: 3px;
+          background: var(--border);
+        }
+        .sheet .close { top: 0; right: 4px; width: 44px; height: 44px; background: none; color: var(--muted); font-size: 1.1rem; }
+        /* the filters popover has no backdrop by default; dim the page like the dialogs do */
+        #filters-panel::backdrop { background: rgb(0 0 0 / 0.5); }
+      }
+
       /* header settings button and dialog */
       .icon-btn {
         display: grid; place-items: center;
@@ -204,6 +267,7 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       .icon-btn:hover svg { transform: rotate(45deg); }
       .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       #settings {
+        --sheet-bg: var(--bg);
         width: min(420px, calc(100vw - 32px));
         padding: 1.25rem;
         border: 0; border-radius: 16px;
