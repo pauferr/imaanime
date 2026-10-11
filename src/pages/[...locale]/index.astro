@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Modal from '../../components/Modal.astro';
 import { seasonNow, toJsonScript } from '../../lib/mal';
-import { WEEK, weekdayName } from '../../lib/time';
+import { WEEK, newestFirst, weekdayName } from '../../lib/time';
 import { localeOf, localePaths, seasonLabel, ui } from '../../i18n';
 
 export const getStaticPaths = localePaths;
@@ -10,7 +10,8 @@ export const getStaticPaths = localePaths;
 const locale = localeOf(Astro.params.locale);
 const t = ui[locale];
 const season = await seasonNow();
-const animes = season.data;
+// pre-sorted like the default "Newest" so the list doesn't reorder when the script runs
+const animes = [...season.data].sort(newestFirst);
 const label = seasonLabel(t, season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
 const compact = new Intl.NumberFormat(locale, { notation: 'compact' }); // 10426 → "10K"
@@ -122,7 +123,7 @@ const tabs = [
 
   <script>
     import type { Anime } from '../../lib/mal';
-    import { localSlot, localTz } from '../../lib/time';
+    import { localSlot, localTz, newestFirst } from '../../lib/time';
     import { openModal } from '../../lib/modal';
     import { pageLocale, ui } from '../../i18n';
 
@@ -170,16 +171,8 @@ const tabs = [
         n += +ok;
       }
       type C = HTMLElement;
-      // "Newest": premiered shows newest first, then upcoming ones soonest first, then those without a date.
-      // ISO dates compare correctly as text, also partial ones ("2026-10").
-      const today = new Date().toISOString().slice(0, 10);
-      const group = (from: string | null) => (!from ? 2 : from.slice(0, 10) <= today ? 0 : 1);
-      const byPremiere = (x: C, y: C) => {
-        const a = anime(x).from, b = anime(y).from;
-        return group(a) - group(b) || (group(a) === 0 ? b!.localeCompare(a!) : (a ?? '').localeCompare(b ?? ''));
-      };
       const by = {
-        new: byPremiere,
+        new: (x: C, y: C) => newestFirst(anime(x), anime(y)),
         score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
         votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
         name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), locale),
