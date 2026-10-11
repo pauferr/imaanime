@@ -32,7 +32,7 @@ npm run preview  # serves dist/
 ```
 src/
   i18n.ts                 UI strings per locale and locale helpers
-  pages/[...locale]/index.astro  season list: New/Continuing/All tabs (All by default), poster grid, search, sort, filters popover, modal
+  pages/[...locale]/index.astro  season list: All/New/Continuing tabs (All by default), poster grid, search, sort, filters popover, modal
   pages/[...locale]/today.astro  today's broadcasts with countdowns
   layouts/Layout.astro    <head>, shared header (nav, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")

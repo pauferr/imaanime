@@ -28,9 +28,9 @@ const formats = [...formatCount.keys()].sort((a, b) => formatCount.get(b)! - for
 
 const newCount = animes.filter((a) => a.isNew).length;
 const tabs = [
+  ['all', t.index.tabs.all, animes.length],
   ['new', t.index.tabs.new, newCount],
   ['continuing', t.index.tabs.continuing, animes.length - newCount],
-  ['all', t.index.tabs.all, animes.length],
 ] as const;
 ---
 
