@@ -21,6 +21,11 @@ const genreCount = new Map<string, number>();
 for (const g of animes.flatMap((a) => a.genres)) genreCount.set(g, (genreCount.get(g) ?? 0) + 1);
 const genres = [...genreCount.keys()].sort((a, b) => genreCount.get(b)! - genreCount.get(a)! || a.localeCompare(b));
 
+// release formats present this season, most common first (TV series, ONA, movies…)
+const formatCount = new Map<string, number>();
+for (const a of animes) formatCount.set(a.format, (formatCount.get(a.format) ?? 0) + 1);
+const formats = [...formatCount.keys()].sort((a, b) => formatCount.get(b)! - formatCount.get(a)!);
+
 const newCount = animes.filter((a) => a.isNew).length;
 const tabs = [
   ['new', t.index.tabs.new, newCount],
@@ -60,6 +65,10 @@ const tabs = [
         <legend>{t.index.day}</legend>
         <label><input type="radio" name="day" value="" checked /><span>{t.index.anyDay}</span></label>
         {days.map((d) => <label><input type="radio" name="day" value={d} /><span>{weekdayName(d, locale, 'short')}</span></label>)}
+      </fieldset>
+      <fieldset class="chips">
+        <legend>{t.index.type}</legend>
+        {formats.map((f) => <label><input type="checkbox" name="type" value={f} /><span>{t.formats.name[f] ?? f}</span></label>)}
       </fieldset>
       <fieldset class="chips">
         <legend>{t.index.genres}</legend>
@@ -144,6 +153,7 @@ const tabs = [
       const q = norm(String(f.get('q')).trim());
       const day = f.get('day');
       const picked = f.getAll('genre') as string[];
+      const types = f.getAll('type') as string[];
       const sort = f.get('sort') as 'new' | 'score' | 'votes' | 'name';
       // searching looks across every tab: "one piece" from the New tab should still find it (cards carry New/Continuing tags)
       const inTab = (a: Anime) => !!q || show === 'all' || (show === 'new') === a.isNew;
@@ -154,6 +164,7 @@ const tabs = [
           inTab(a) &&
           (!q || names[Number(c.dataset.i)].includes(q)) &&
           (!day || c.dataset.day === day) &&
+          (!types.length || types.includes(a.format)) && // types: OR (a show has one format)
           picked.every((p) => a.genres.includes(p)); // ponytail: genres use AND logic (must have every selected one)
         c.hidden = !ok;
         n += +ok;
@@ -176,7 +187,7 @@ const tabs = [
       grid.prepend(...cards.sort(by));
 
       // the tabs already show totals: only report a count while narrowing down
-      const active = (day ? 1 : 0) + picked.length;
+      const active = (day ? 1 : 0) + types.length + picked.length;
       const status = document.getElementById('count')!;
       status.hidden = !q && !active;
       status.textContent = t.index.count(n, cards.filter((c) => inTab(anime(c))).length);

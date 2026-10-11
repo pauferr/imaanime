@@ -56,7 +56,7 @@ src/
 - **Air times**: MAL gives weekday (`"saturday"`) and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover). It has its own title search.
 - **Time zone**: always the browser's (`localTz()`), no picker. **Title language** (`titles`) is stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted). Search ignores the tab, so continuing shows are found from New too.
-- **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Genres are listed by frequency.
+- **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Type (OR: TV series, ONA, Movie…) and genres (AND) are listed by frequency.
 - **Title language (Romaji / English)**: a segmented control in the header; pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
 
 ## Languages (i18n)

@@ -19,6 +19,7 @@ const en = {
     sortScore: 'Top rated',
     sortVotes: 'Most popular',
     sortName: 'Title A–Z',
+    type: 'Type',
     genres: 'Genres',
     filters: 'Filters',
     tabs: { label: 'Show', new: 'New', continuing: 'Continuing', all: 'All' },
