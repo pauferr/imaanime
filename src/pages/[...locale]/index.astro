@@ -120,6 +120,8 @@ const tabs = [
     ))}
     <p class="empty" hidden>{t.index.empty}</p>
   </main>
+  <!-- reaching this (or getting close) shows the next batch of cards -->
+  <div id="more" hidden aria-hidden="true"></div>
 
   <Modal t={t.modal} />
 
@@ -153,6 +155,35 @@ const tabs = [
     // defaults are left out of the URL
     const DEFAULTS: Record<string, string> = { show: 'all', sort: 'new' };
 
+    // ponytail: progressive display. Every card is already in the DOM (and in the JSON); only the first `limit`
+    // matches are displayed and the rest wait behind [data-later]. Render from the JSON instead if this ever
+    // grows to thousands of entries.
+    const PAGE = 24; // fits the 2/3/4/6-column grids
+    let limit = PAGE;
+    const more = document.getElementById('more')!;
+    function paginate() {
+      let shown = 0;
+      for (const c of cards) {
+        if (c.hidden) c.removeAttribute('data-later');
+        else c.toggleAttribute('data-later', ++shown > limit);
+      }
+      more.hidden = shown <= limit;
+    }
+    // keep adding batches while the end of the list is within 800px of the viewport
+    function fill() {
+      while (!more.hidden && more.getBoundingClientRect().top < innerHeight + 800) {
+        limit += PAGE;
+        paginate();
+      }
+    }
+    new IntersectionObserver(fill, { rootMargin: '800px' }).observe(more);
+    // a new search, filter, tab or sort starts again from the first batch
+    const restart = () => {
+      limit = PAGE;
+      apply();
+      fill();
+    };
+
     function apply() {
       const f = new FormData(form);
       const show = f.get('show');
@@ -183,6 +214,7 @@ const tabs = [
         name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), locale),
       }[sort];
       grid.prepend(...cards.sort(by));
+      paginate();
 
       // the tabs already show totals: only report a count while narrowing down
       const active = (day ? 1 : 0) + types.length + picked.length;
@@ -210,7 +242,7 @@ const tabs = [
     // "Clear filters" only clears the panel (day and genres); the tab, search and sort stay
     document.getElementById('clear')!.addEventListener('click', () => {
       for (const el of form.querySelectorAll<HTMLInputElement>('#filters-panel input')) el.checked = el.value === '';
-      apply();
+      restart();
     });
 
     // air times and the day filter follow the user's time zone
@@ -225,7 +257,7 @@ const tabs = [
       apply();
     }
     document.addEventListener('settings-change', renderTz); // title language (A–Z order), time zone and format
-    form.addEventListener('input', apply);
+    form.addEventListener('input', restart);
     sheet(document.getElementById('filters-panel')!);
     addEventListener('popstate', apply); // closing a sheet goes back one history entry: rewrite the URL from the form
     renderTz();
@@ -335,6 +367,8 @@ const tabs = [
       overflow: hidden;
     }
     .when { margin: 0 0.65rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
+    .card[data-later] { display: none; }
+    #more { height: 1px; }
 
     @media (max-width: 640px) {
       .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
