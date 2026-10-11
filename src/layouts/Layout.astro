@@ -13,7 +13,8 @@ const home = localeUrl(locale);
 const today = localeUrl(locale, 'today');
 const trim = (p: string) => p.replace(/\/$/, '');
 const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'page' : undefined);
-// Umami analytics: production builds only, and only where the website ID is configured (forks don't report here)
+// Umami analytics: production builds only, and only where the website ID is configured (forks don't report here).
+// Served from our own domain (/s/*, proxied to Umami by vercel.json) so ad blockers don't drop it.
 const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefined;
 ---
 
@@ -24,7 +25,7 @@ const umamiId = import.meta.env.PROD ? import.meta.env.UMAMI_WEBSITE_ID : undefi
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    {umamiId && <script is:inline defer src="https://cloud.umami.is/script.js" data-website-id={umamiId} data-domains="imaanime.vercel.app" data-exclude-search="true"></script>}
+    {umamiId && <script is:inline defer src="/s/script.js" data-website-id={umamiId} data-host-url="/s" data-exclude-search="true"></script>}
   </head>
   <body>
     <header>

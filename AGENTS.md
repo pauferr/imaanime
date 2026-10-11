@@ -74,7 +74,8 @@ The site ships in English only, but is structured for more locales:
 
 ## Analytics (Umami)
 
-- `Layout.astro` adds Umami Cloud's script (`data-domains="imaanime.vercel.app"`, so previews don't count) only when `UMAMI_WEBSITE_ID` is set and it's a production build. Pageviews are automatic.
+- `Layout.astro` adds Umami's script only when `UMAMI_WEBSITE_ID` is set and it's a production build. Pageviews are automatic.
+- **Proxied through our domain** so ad blockers (which block `cloud.umami.is`) don't drop it: the page loads `/s/script.js` and sends to `/s/api/send` (`data-host-url="/s"`); `vercel.json` rewrites both to Umami Cloud. On another host, add the same two rewrites.
 - `data-exclude-search="true"` is required: `/` keeps search and filters in the URL via `history.replaceState`, and Umami counts every URL change as a pageview, so without it each keystroke would be a pageview and the search text (`?q=`) would be sent.
 - Custom events go through `track()` in `src/lib/track.ts`, a no-op when Umami isn't loaded: `open-anime` `{ title, page }`, `filter` `{ field, value }` (unchecked checkbox → `-value`), `search` `{ page }` after 1.5 s idle (never the query text), `settings` `{ titles | clock | tz: auto/custom }` (never the actual zone). MAL links (anime, prequel, sequel) use Umami's `data-umami-event="mal-link"` attributes; `openModal()` sets their title.
 - Never send free text or personal data.

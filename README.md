@@ -60,6 +60,6 @@ AniList needs no key.
 2. In **Settings → Environment Variables**, add `MAL_CLIENT_ID` (and `UMAMI_WEBSITE_ID` if you use Umami), then deploy.
 3. *Optional, to refresh the data every 6 hours*: in **Settings → Git → Deploy Hooks**, create a hook for `main` and save its URL as a GitHub Actions secret named `VERCEL_DEPLOY_HOOK` (**Settings → Secrets and variables → Actions**). The included workflow `.github/workflows/refresh.yml` calls it on a schedule; you can also run it by hand from the **Actions** tab.
 
-If you deploy elsewhere, change `data-domains` in `src/layouts/Layout.astro` to your domain so Umami counts your visits.
+Analytics requests go through your own domain (`/s/script.js` and `/s/api/send`), proxied to Umami Cloud by `vercel.json`, so ad blockers don't drop them. If you deploy elsewhere, add the same two rewrites on your host.
 
 Technical notes for contributors are in [AGENTS.md](AGENTS.md).

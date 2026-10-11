@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/s/script.js", "destination": "https://cloud.umami.is/script.js" },
+    { "source": "/s/api/send", "destination": "https://gateway.umami.is/api/send" }
+  ]
+}
