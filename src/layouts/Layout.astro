@@ -170,6 +170,20 @@ const current = (href: string) => (trim(Astro.url.pathname) === trim(href) ? 'pa
       .card:hover, .card:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
       .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       .card img { display: block; width: 100%; object-fit: cover; transition: transform 0.3s ease; }
+      /* poster cover with a badge on top (score on /, countdown on /today) */
+      .cover { position: relative; overflow: hidden; }
+      .cover img { aspect-ratio: 45 / 64; }
+      .badge {
+        position: absolute; left: 8px; bottom: 8px;
+        padding: 0.25rem 0.55rem;
+        border-radius: 8px;
+        background: rgb(0 0 0 / 0.78);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .badge.score { color: #facc15; }
       .card:hover img { transform: scale(1.05); }
 
       .score { color: #eab308; font-weight: 700; }

@@ -81,8 +81,8 @@ export function airingToday(b: Broadcast, tz: string, now = new Date()) {
 export const currentTz = () => (document.getElementById('tz') as HTMLSelectElement | null)?.value || getTz();
 
 // Localized weekday name for a MAL day key ("monday" → "Monday" in en, "lunes" in es)
-export const weekdayName = (day: string, locale: string) =>
-  new Date(Date.UTC(2024, 0, 7 + WEEK.indexOf(day))).toLocaleString(locale, { weekday: 'long', timeZone: 'UTC' }); // 2024-01-07 was a Sunday
+export const weekdayName = (day: string, locale: string, style: 'long' | 'short' = 'long') =>
+  new Date(Date.UTC(2024, 0, 7 + WEEK.indexOf(day))).toLocaleString(locale, { weekday: style, timeZone: 'UTC' }); // 2024-01-07 was a Sunday
 
 // Original broadcast slot in Japan time, e.g. "Saturday 11:30 PM JST"
 export function jstSlot(b: Broadcast, locale: string) {

@@ -32,7 +32,7 @@ npm run preview  # serves dist/
 ```
 src/
   i18n.ts                 UI strings per locale and locale helpers
-  pages/[...locale]/index.astro  season list: search, filters, sorting, modal
+  pages/[...locale]/index.astro  season list: New/Continuing/All tabs, poster grid, search, sort, filters popover, modal
   pages/[...locale]/today.astro  today's broadcasts with countdowns
   layouts/Layout.astro    <head>, shared header (nav, time zone picker, JP/EN switch), CSS variables and base styles
   components/Modal.astro  detail <dialog> (markup and styles; native closing via closedby="any")
@@ -45,13 +45,14 @@ src/
 ## How it works
 
 - **Data at build time**: `seasonNow()` fetches the current season from MAL (usually a single request of up to 500 entries; adult content excluded) and maps each entry to a flat `Anime` object holding only the fields the site uses. The published site is static HTML: visitors never call MAL.
-- **Which shows**: everything airing now (this season's new shows, plus continuing ones that started in earlier seasons) and this season's shows that haven't premiered yet. Finished shows, movies and music videos are excluded.
+- **Which shows**: everything airing now (this season's new shows, plus continuing ones that started in earlier seasons) and this season's shows that haven't premiered yet. Finished shows, movies and music videos are excluded. `Anime.isNew` (starts this season) drives the New / Continuing tabs on `/`.
 - **Dev cache**: in `dev`, the last good MAL response is saved to `node_modules/.cache/imaanime/season-now.json` and reused for 6 hours, so reloads and restarts don't wait on MAL. Delete that file to force a refetch. `build` never uses it.
 - **When MAL fails**: in `dev`, the last cached response is used however old; with no cache the page shows the error, and the failure is remembered for 60 s so reloads fail fast. `build` fails and Vercel keeps the previous deployment.
 - **Data on the client**: each page embeds the anime list in `<script type="application/json" id="animes">` via `toJsonScript()`, which escapes `<` so the data can never close the tag.
 - **Air times**: MAL gives weekday (`"saturday"`) and time in JST (UTC+9, no daylight saving). `lib/time.ts` converts them to the user's time zone. Times like "25:30" (Japanese late-night notation) correctly overflow into the next day.
 - **"Today" is per user**: `/today` renders every anime hidden, and the client shows the ones airing today in the user's time zone, updating every second (countdown, switch to "Aired", midnight rollover).
-- **Preferences**: time zone (`tz`) and title language (`titles`) are stored in `localStorage` (always inside try/catch). Filters on `/` live in the URL.
+- **Preferences**: time zone (`tz`) and title language (`titles`) are stored in `localStorage` (always inside try/catch). Tab, search, sort and filters on `/` are form fields whose state lives in the URL (defaults omitted).
+- **Filters panel**: a native `popover` (light dismiss, no JS), anchored to its button with CSS anchor positioning where supported and centered otherwise. Genres are listed by frequency.
 - **JP/EN title switch**: pure CSS (`body:has(#titles-en:checked)`), no JS to show or hide titles. It is a title preference (`localStorage` key `titles`), independent of the UI locale.
 
 ## Languages (i18n)

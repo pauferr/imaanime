@@ -13,53 +13,75 @@ const season = await seasonNow();
 const animes = season.data;
 const label = seasonLabel(t, season);
 const score = (s: number | null) => (s == null ? 'N/A' : s.toFixed(2));
-const genres = [...new Set(animes.flatMap((a) => a.genres))].sort();
 const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
+
+// most common genres first: the long tail (many with 1–2 shows) ends up at the bottom of the panel
+const genreCount = new Map<string, number>();
+for (const g of animes.flatMap((a) => a.genres)) genreCount.set(g, (genreCount.get(g) ?? 0) + 1);
+const genres = [...genreCount.keys()].sort((a, b) => genreCount.get(b)! - genreCount.get(a)! || a.localeCompare(b));
+
+const newCount = animes.filter((a) => a.isNew).length;
+const tabs = [
+  ['new', t.index.tabs.new, newCount],
+  ['continuing', t.index.tabs.continuing, animes.length - newCount],
+  ['all', t.index.tabs.all, animes.length],
+] as const;
 ---
 
 <Layout locale={locale} title={`Ima Anime · ${label}`} description={t.index.description(label)} subtitle={t.index.subtitle(label)}>
   <form class="filters" id="filters" onsubmit="return false">
-    <div class="row">
+    <fieldset class="tabs">
+      <legend class="sr-only">{t.index.tabs.label}</legend>
+      {tabs.map(([value, name, n]) => (
+        <label>
+          <input type="radio" name="show" value={value} checked={value === 'new'} />
+          <span>{name} <small>{n}</small></span>
+        </label>
+      ))}
+    </fieldset>
+
+    <div class="toolbar">
       <input type="search" name="q" placeholder={t.index.search} aria-label={t.index.searchLabel} autocomplete="off" />
-      <select name="day" aria-label={t.index.day}>
-        <option value="">{t.index.anyDay}</option>
-        {days.map((d) => <option value={d}>{weekdayName(d, locale)}</option>)}
-      </select>
       <select name="sort" aria-label={t.index.sort}>
         <option value="new">{t.index.sortNew}</option>
         <option value="score">{t.index.sortScore}</option>
         <option value="votes">{t.index.sortVotes}</option>
         <option value="name">{t.index.sortName}</option>
       </select>
+      <button type="button" class="filters-btn" popovertarget="filters-panel">
+        {t.index.filters}<span id="active" hidden></span>
+      </button>
     </div>
-    <fieldset class="chips">
-      <legend>{t.index.genres}</legend>
-      {genres.map((g) => (
-        <label><input type="checkbox" name="genre" value={g} /><span>{g}</span></label>
-      ))}
-    </fieldset>
-    <p class="status">
-      <span id="count"></span>
-      <button type="reset" id="clear">{t.index.clear}</button>
-    </p>
+
+    <!-- native popover: closes on outside click and Esc; anchored under the button where CSS anchor positioning exists -->
+    <div id="filters-panel" popover>
+      <fieldset class="chips">
+        <legend>{t.index.day}</legend>
+        <label><input type="radio" name="day" value="" checked /><span>{t.index.anyDay}</span></label>
+        {days.map((d) => <label><input type="radio" name="day" value={d} /><span>{weekdayName(d, locale, 'short')}</span></label>)}
+      </fieldset>
+      <fieldset class="chips">
+        <legend>{t.index.genres}</legend>
+        {genres.map((g) => <label><input type="checkbox" name="genre" value={g} /><span>{g}</span></label>)}
+      </fieldset>
+      <button type="button" id="clear">{t.index.clear}</button>
+    </div>
+
+    <p class="status" id="count" hidden></p>
   </form>
 
   <main class="grid">
     {animes.map((a, i) => (
       <button class="card" data-i={i} aria-haspopup="dialog">
-        <img src={a.img} alt="" loading="lazy" width="450" height="640" />
-        <div class="body">
-          <h2>
-            <span class="jp">{a.title}</span>
-            <span class="en">{a.titleEn ?? a.title}</span>
-          </h2>
-          <p class="meta-line">
-            <span class="score">★ {score(a.score)}</span>
-            <span class="when">{a.day ? weekdayName(a.day, locale) : '?'}</span>
-            <span>{t.index.eps(a.episodes ?? '?')}</span>
-          </p>
-          <p class="syn">{a.synopsis ?? t.noSynopsis}</p>
+        <div class="cover">
+          <img src={a.img} alt="" loading="lazy" width="450" height="640" />
+          <span class="badge score">★ {score(a.score)}</span>
         </div>
+        <h2>
+          <span class="jp">{a.title}</span>
+          <span class="en">{a.titleEn ?? a.title}</span>
+        </h2>
+        <p class="when">{a.day ? weekdayName(a.day, locale) : '?'}</p>
       </button>
     ))}
     <p class="empty" hidden>{t.index.empty}</p>
@@ -94,9 +116,12 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
       const a = anime(c);
       return toggle.checked ? a.titleEn ?? a.title : a.title;
     };
+    // defaults are left out of the URL
+    const DEFAULTS: Record<string, string> = { show: 'new', sort: 'new' };
 
     function apply() {
       const f = new FormData(form);
+      const show = f.get('show');
       const q = norm(String(f.get('q')).trim());
       const day = f.get('day');
       const picked = f.getAll('genre') as string[];
@@ -104,8 +129,11 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
       let n = 0;
       for (const c of cards) {
         const a = anime(c);
-        // ponytail: genres use AND logic (must have every selected one)
-        const ok = (!q || names[Number(c.dataset.i)].includes(q)) && (!day || c.dataset.day === day) && picked.every((p) => a.genres.includes(p));
+        const ok =
+          (show === 'all' || (show === 'new') === a.isNew) &&
+          (!q || names[Number(c.dataset.i)].includes(q)) &&
+          (!day || c.dataset.day === day) &&
+          picked.every((p) => a.genres.includes(p)); // ponytail: genres use AND logic (must have every selected one)
         c.hidden = !ok;
         n += +ok;
       }
@@ -117,20 +145,35 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
         name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), locale),
       }[sort];
       grid.prepend(...cards.sort(by));
-      document.getElementById('count')!.textContent = t.index.count(n, cards.length);
+
+      // the tabs already show totals: only report a count while narrowing down
+      const active = (day ? 1 : 0) + picked.length;
+      const status = document.getElementById('count')!;
+      status.hidden = !q && !active;
+      status.textContent = t.index.count(n, cards.filter((c) => show === 'all' || (show === 'new') === anime(c).isNew).length);
+      const badge = document.getElementById('active')!;
+      badge.hidden = !active;
+      badge.textContent = String(active);
       grid.querySelector<HTMLElement>('.empty')!.hidden = n > 0;
-      document.getElementById('clear')!.hidden = !q && !day && !picked.length;
+
       // state lives in the URL: shareable and survives reloads
-      const params = new URLSearchParams(
-        [...f].filter(([k, v]) => v && !(k === 'sort' && v === 'new')) as [string, string][]
-      );
+      const params = new URLSearchParams([...f].filter(([k, v]) => v && DEFAULTS[k] !== v) as [string, string][]);
       history.replaceState(null, '', params.size ? `?${params}` : location.pathname);
     }
 
-    // restore filters from the URL
+    // restore filters from the URL; radios keep their default when the URL doesn't mention them
     const params = new URLSearchParams(location.search);
-    for (const el of form.querySelectorAll<HTMLInputElement>('[name]'))
-      el.type === 'checkbox' ? (el.checked = params.getAll(el.name).includes(el.value)) : (el.value = params.get(el.name) ?? el.value);
+    for (const el of form.querySelectorAll<HTMLInputElement>('[name]')) {
+      if (el.type === 'checkbox') el.checked = params.getAll(el.name).includes(el.value);
+      else if (el.type === 'radio') el.checked = (params.get(el.name) ?? DEFAULTS[el.name] ?? '') === el.value;
+      else el.value = params.get(el.name) ?? el.value;
+    }
+
+    // "Clear filters" only clears the panel (day and genres); the tab, search and sort stay
+    document.getElementById('clear')!.addEventListener('click', () => {
+      for (const el of form.querySelectorAll<HTMLInputElement>('#filters-panel input')) el.checked = el.value === '';
+      apply();
+    });
 
     // air times and the day filter follow the selected time zone
     function renderTz() {
@@ -144,7 +187,6 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
     tzSelect.addEventListener('change', renderTz);
     toggle.addEventListener('change', apply); // A–Z order depends on the title language
     form.addEventListener('input', apply);
-    form.addEventListener('reset', () => setTimeout(apply)); // reset clears the fields after the event fires
     renderTz();
 
     // "/" focuses the search box
@@ -163,14 +205,36 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
   </script>
 
   <style>
-    /* --- filters --- */
     .filters {
+      display: grid;
+      gap: 0.75rem;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem 16px 0;
+      padding: 1.25rem 16px 1rem;
     }
-    .filters .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .filters input[type='search'], .filters select {
+    fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* --- tabs (segmented control) --- */
+    .tabs { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); width: fit-content; }
+    .tabs input { position: absolute; opacity: 0; }
+    .tabs span {
+      display: block;
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tabs small { font-weight: 500; opacity: 0.7; }
+    .tabs input:checked + span { background: var(--accent); color: #fff; }
+    .tabs input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* --- toolbar --- */
+    .toolbar { display: flex; gap: 0.5rem; }
+    .toolbar input, .toolbar select, .filters-btn {
       font: inherit;
       padding: 0.55rem 0.8rem;
       border: 1px solid var(--border);
@@ -178,10 +242,38 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
       background: var(--surface);
       color: var(--text);
     }
-    .filters input[type='search'] { flex: 1 1 240px; min-width: 0; }
-    .filters :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; border: 0; padding: 0; margin: 0.75rem 0 0; }
-    .chips legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .toolbar input { flex: 1; min-width: 0; }
+    .filters-btn { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-weight: 600; anchor-name: --filters; }
+    #active {
+      min-width: 1.4em;
+      padding: 0 0.35em;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    /* --- filters panel (popover) --- */
+    #filters-panel {
+      width: min(560px, calc(100vw - 32px));
+      max-height: min(70vh, 560px);
+      overflow-y: auto;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-hover);
+    }
+    @supports (anchor-name: --a) {
+      @media (min-width: 641px) {
+        #filters-panel { position-anchor: --filters; inset: auto; top: anchor(bottom); right: anchor(right); margin: 0.5rem 0 0; }
+      }
+    }
+    #filters-panel:popover-open { display: grid; gap: 1rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .chips legend { width: 100%; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
     .chips input { position: absolute; opacity: 0; }
     .chips span {
       display: block;
@@ -196,45 +288,35 @@ const days = [...WEEK.slice(1), WEEK[0]]; // Monday first
     .chips span:hover { border-color: var(--accent); }
     .chips input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
     .chips input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .status { display: flex; align-items: center; gap: 1rem; margin: 0.75rem 0 1rem; color: var(--muted); font-size: 0.9rem; }
-    #clear { font: inherit; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+    #clear { justify-self: start; font: inherit; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+    .status { margin: 0; color: var(--muted); font-size: 0.9rem; }
 
-    /* --- cards (horizontal: cover on the left) --- */
+    /* --- poster grid --- */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1.25rem 1rem;
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 16px 3rem;
     }
-    .card { display: grid; grid-template-columns: 105px 1fr; height: 150px; }
-    .card img { height: 100%; }
-    .body { padding: 0.7rem 0.85rem; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
-    .body h2 {
-      margin: 0;
-      font-size: 0.98rem;
-      line-height: 1.25;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .meta-line { display: flex; gap: 0.6rem; margin: 0; font-size: 0.78rem; color: var(--muted); }
-    .syn {
-      margin: 0;
-      font-size: 0.83rem;
-      color: var(--muted);
+    .card { display: flex; flex-direction: column; }
+    .card h2 {
+      margin: 0.55rem 0.65rem 0.15rem;
+      font-size: 0.9rem;
+      line-height: 1.3;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .when { margin: 0 0.65rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
 
     @media (max-width: 640px) {
-      .grid { grid-template-columns: 1fr; }
-      .card { grid-template-columns: 90px 1fr; height: 130px; }
-      .syn { -webkit-line-clamp: 2; }
-      .filters select { flex: 1; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
+      .toolbar { flex-wrap: wrap; }
+      .toolbar input { flex-basis: 100%; }
+      .toolbar select { flex: 1; }
     }
   </style>
 </Layout>

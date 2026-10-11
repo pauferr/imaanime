@@ -20,10 +20,11 @@ const en = {
     sortVotes: 'Most popular',
     sortName: 'Title A–Z',
     genres: 'Genres',
+    filters: 'Filters',
+    tabs: { label: 'Show', new: 'New', continuing: 'Continuing', all: 'All' },
     clear: 'Clear filters',
     empty: 'No anime matches these filters.',
     count: (n: number, total: number) => `${n} of ${total} anime`,
-    eps: (n: number | string) => `${n} eps`,
   },
   today: {
     title: 'Today',

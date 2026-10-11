@@ -21,6 +21,7 @@ export type Anime = {
   episodes: number | null;
   day: string | null; // "saturday", Japan time
   time: string | null; // "23:30", Japan time
+  isNew: boolean; // starts this season (vs. continuing from an earlier one)
   from: string | null; // premiere date: "2026-10-04", sometimes partial ("2026-10")
   studios: string[];
   genres: string[];
@@ -41,7 +42,7 @@ async function get(url: string) {
   return res.json();
 }
 
-const lean = (a: any): Anime => ({
+const lean = (a: any, isNew: boolean): Anime => ({
   url: `https://myanimelist.net/anime/${a.id}`,
   img: a.main_picture?.large ?? a.main_picture?.medium ?? '',
   title: a.title,
@@ -52,6 +53,7 @@ const lean = (a: any): Anime => ({
   episodes: a.num_episodes || null, // MAL uses 0 for "unknown"
   day: a.broadcast?.day_of_the_week ?? null,
   time: a.broadcast?.start_time ?? null,
+  isNew,
   from: a.start_date ?? null,
   studios: (a.studios ?? []).map((s: any) => s.name),
   genres: (a.genres ?? []).map((g: any) => g.name),
@@ -75,7 +77,7 @@ async function load() {
       !['movie', 'music'].includes(a.media_type) &&
       (a.status === 'currently_airing' || (a.status === 'not_yet_aired' && startsNow(a)))
   );
-  return { season, year, data: airing.map(lean) };
+  return { season, year, data: airing.map((a) => lean(a, startsNow(a))) };
 }
 
 type Season = Awaited<ReturnType<typeof load>>;
