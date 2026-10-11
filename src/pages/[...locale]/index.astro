@@ -98,7 +98,7 @@ const tabs = [
           <span class="jp">{a.title}</span>
           <span class="en">{a.titleEn ?? a.title}</span>
         </h2>
-        <p class="when">{a.day ? weekdayName(a.day, locale) : '?'}</p>
+        <p class="when">{a.day ? weekdayName(a.day, locale) : ''}</p>
       </button>
     ))}
     <p class="empty" hidden>{t.index.empty}</p>
@@ -156,8 +156,16 @@ const tabs = [
         n += +ok;
       }
       type C = HTMLElement;
+      // "Newest": premiered shows newest first, then upcoming ones soonest first, then those without a date.
+      // ISO dates compare correctly as text, also partial ones ("2026-10").
+      const today = new Date().toISOString().slice(0, 10);
+      const group = (from: string | null) => (!from ? 2 : from.slice(0, 10) <= today ? 0 : 1);
+      const byPremiere = (x: C, y: C) => {
+        const a = anime(x).from, b = anime(y).from;
+        return group(a) - group(b) || (group(a) === 0 ? b!.localeCompare(a!) : (a ?? '').localeCompare(b ?? ''));
+      };
       const by = {
-        new: (x: C, y: C) => (anime(y).from ?? '').localeCompare(anime(x).from ?? ''), // ISO strings sort correctly as text; missing dates go last
+        new: byPremiere,
         score: (x: C, y: C) => (anime(y).score ?? 0) - (anime(x).score ?? 0),
         votes: (x: C, y: C) => (anime(y).votes ?? 0) - (anime(x).votes ?? 0),
         name: (x: C, y: C) => shownName(x).localeCompare(shownName(y), locale),
@@ -198,7 +206,7 @@ const tabs = [
       for (const c of cards) {
         const slot = localSlot(anime(c), localTz(), locale);
         c.dataset.day = slot?.day ?? '';
-        c.querySelector('.when')!.textContent = slot?.short ?? '?';
+        c.querySelector('.when')!.textContent = slot?.short ?? ''; // no schedule on MAL: show nothing rather than "?"
       }
       apply();
     }
