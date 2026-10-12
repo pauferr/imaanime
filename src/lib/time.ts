@@ -90,13 +90,16 @@ export function formatDate(iso: string, locale: string) {
   return date.toLocaleDateString(locale, { ...opts, timeZone: 'UTC' });
 }
 
-// "Newest" order: premiered shows newest first, then upcoming ones soonest first, then those without a date.
-// ISO dates compare correctly as text, also partial ones ("2026-10"). Used at build time and in the browser,
+// "Newest" order: premiered shows newest first, then upcoming ones soonest first, then those without a date;
+// same-day premieres are ordered by JST air time. ISO dates and "HH:MM" times compare correctly as text, also
+// partial dates ("2026-10") and late-night times ("25:30"). Used at build time and in the browser,
 // so the server-rendered list already matches the default sort and nothing jumps on load.
-export function newestFirst(a: { from: string | null }, b: { from: string | null }, today = new Date().toISOString().slice(0, 10)) {
+type Premiere = { from: string | null; time: string | null };
+export function newestFirst(a: Premiere, b: Premiere, today = new Date().toISOString().slice(0, 10)) {
   const group = (from: string | null) => (!from ? 2 : from.slice(0, 10) <= today ? 0 : 1);
+  const key = (x: Premiere) => `${x.from ?? ''} ${x.time ?? ''}`;
   const ga = group(a.from), gb = group(b.from);
-  return ga - gb || (ga === 0 ? b.from!.localeCompare(a.from!) : (a.from ?? '').localeCompare(b.from ?? ''));
+  return ga - gb || (ga === 0 ? key(b).localeCompare(key(a)) : key(a).localeCompare(key(b)));
 }
 
 // Today's broadcast in time zone `tz`: AniList's exact episode schedule when it knows the show (an empty list
